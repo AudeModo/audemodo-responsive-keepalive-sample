@@ -1,0 +1,2348 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>responsive-keepalive · Architecture &amp; API Pipelines</title>
+    <style>
+      :root {
+        --bg: #1a1b26;
+        --bg2: #1f2335;
+        --bg3: #24283b;
+        --panel: #1d1f30;
+        --border: #2a2e44;
+        --fg: #c0caf5;
+        --fg-dim: #9aa5ce;
+        --muted: #565f89;
+        --blue: #7aa2f7;
+        --cyan: #7dcfff;
+        --green: #9ece6a;
+        --purple: #bb9af7;
+        --orange: #ff9e64;
+        --red: #f7768e;
+        --yellow: #e0af68;
+        --teal: #73daca;
+        --mono: 'SF Mono', 'JetBrains Mono', 'Fira Code', ui-monospace, Menlo, monospace;
+        --sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Pretendard', 'Apple SD Gothic Neo',
+          system-ui, sans-serif;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        scroll-behavior: smooth;
+        scroll-padding-top: 64px;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(1100px 480px at 78% -8%, #2a2150 0%, transparent 60%),
+          radial-gradient(900px 420px at 8% 4%, #16233f 0%, transparent 55%), var(--bg);
+        color: var(--fg);
+        font-family: var(--sans);
+        line-height: 1.65;
+        -webkit-font-smoothing: antialiased;
+      }
+      a {
+        color: var(--blue);
+        text-decoration: none;
+      }
+      code {
+        font-family: var(--mono);
+      }
+
+      /* ---- top nav ---- */
+      .topnav {
+        position: sticky;
+        top: 0;
+        z-index: 40;
+        background: rgba(20, 21, 34, 0.86);
+        backdrop-filter: blur(12px);
+        border-bottom: 1px solid var(--border);
+      }
+      .topnav-inner {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 11px 24px;
+        display: flex;
+        align-items: center;
+        gap: 18px;
+        flex-wrap: wrap;
+      }
+      .topnav .logo {
+        font-family: var(--mono);
+        font-weight: 700;
+        font-size: 14px;
+        color: var(--fg);
+        white-space: nowrap;
+      }
+
+      .topnav nav {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        margin-left: auto;
+      }
+      .topnav nav a {
+        color: var(--fg-dim);
+        font-size: 13px;
+        padding: 5px 11px;
+        border-radius: 8px;
+      }
+      .topnav nav a:hover {
+        color: var(--fg);
+        background: var(--bg3);
+      }
+
+      .wrap {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 0 24px 96px;
+      }
+      section {
+        padding-top: 56px;
+      }
+      .eyebrow {
+        font-family: var(--mono);
+        font-size: 12px;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--purple);
+        margin-bottom: 10px;
+      }
+      h1 {
+        font-size: 40px;
+        line-height: 1.12;
+        margin: 0 0 16px;
+        letter-spacing: -0.02em;
+      }
+      h2 {
+        font-size: 26px;
+        margin: 0 0 6px;
+        letter-spacing: -0.01em;
+      }
+      h3 {
+        font-size: 17px;
+        margin: 0;
+      }
+      .lead {
+        color: var(--fg-dim);
+        font-size: 17px;
+        max-width: 760px;
+      }
+      .sec-desc {
+        color: var(--fg-dim);
+        max-width: 780px;
+        margin: 4px 0 26px;
+      }
+
+      /* ---- hero ---- */
+      .hero {
+        padding-top: 60px;
+      }
+      .moon-strip {
+        font-size: 19px;
+        letter-spacing: 6px;
+        margin-bottom: 22px;
+      }
+      .thesis {
+        margin-top: 24px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--purple);
+        border-radius: 12px;
+        padding: 18px 20px;
+        max-width: 820px;
+      }
+      .thesis b {
+        color: var(--cyan);
+      }
+      .pillrow {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+        margin-top: 22px;
+      }
+      .pill {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--fg-dim);
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 999px;
+        padding: 5px 12px;
+      }
+
+      /* ---- layers ---- */
+      .layers {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .layer {
+        display: grid;
+        grid-template-columns: 116px 1fr;
+        gap: 14px;
+        align-items: stretch;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 12px 14px;
+      }
+      .layer-tag {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        border-right: 1px solid var(--border);
+        padding-right: 12px;
+      }
+      .layer-tag .ln {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--orange);
+      }
+      .layer-tag .lt {
+        font-size: 13px;
+        color: var(--fg);
+        font-weight: 600;
+      }
+      .layer-files {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 7px;
+        align-items: flex-start;
+      }
+      .fchip {
+        font-family: var(--mono);
+        font-size: 11.5px;
+        padding: 4px 9px;
+        border-radius: 7px;
+        border: 1px solid var(--border);
+        background: var(--bg3);
+        color: var(--fg-dim);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: 0.12s;
+      }
+      .fchip:hover {
+        color: var(--fg);
+        border-color: var(--muted);
+      }
+      .fchip .dir {
+        color: var(--muted);
+      }
+
+      /* ---- graph ---- */
+      .graph-wrap {
+        display: grid;
+        grid-template-columns: 1fr 312px;
+        gap: 18px;
+        align-items: start;
+      }
+      .graph-box {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 8px;
+        overflow: auto;
+      }
+      svg {
+        display: block;
+      }
+      .node rect {
+        rx: 8;
+        transition:
+          opacity 0.15s,
+          stroke 0.15s;
+      }
+      .node text {
+        font-family: var(--mono);
+        fill: var(--fg);
+        pointer-events: none;
+      }
+      .node .role {
+        fill: var(--fg-dim);
+      }
+      .node {
+        cursor: pointer;
+      }
+      .node.dim {
+        opacity: 0.18;
+      }
+      .edge {
+        fill: none;
+        stroke: var(--muted);
+        stroke-width: 1.3;
+        opacity: 0.5;
+        transition: 0.15s;
+      }
+      .edge.type {
+        stroke-dasharray: 3 3;
+      }
+      .edge.dim {
+        opacity: 0.05;
+      }
+      .edge.hot {
+        stroke: var(--blue);
+        opacity: 0.95;
+        stroke-width: 2;
+      }
+      .edge.hot.up {
+        stroke: var(--orange);
+      }
+
+      .detail {
+        position: sticky;
+        top: 70px;
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 14px;
+        padding: 16px;
+        min-height: 200px;
+      }
+      .detail .dt-file {
+        font-family: var(--mono);
+        font-size: 14px;
+        color: var(--cyan);
+        word-break: break-all;
+      }
+      .detail .dt-kind {
+        display: inline-block;
+        font-family: var(--mono);
+        font-size: 10.5px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        margin: 8px 0 10px;
+      }
+      .detail .dt-role {
+        color: var(--fg-dim);
+        font-size: 13.5px;
+        margin-bottom: 14px;
+      }
+      .detail h4 {
+        margin: 14px 0 7px;
+        font-size: 11px;
+        font-family: var(--mono);
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+      }
+      .detail .chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .detail .empty {
+        color: var(--muted);
+        font-size: 12.5px;
+      }
+      .legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        margin: 14px 2px 0;
+      }
+      .legend span {
+        font-size: 12px;
+        color: var(--fg-dim);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+        display: inline-block;
+      }
+      .graph-hint {
+        color: var(--muted);
+        font-size: 12.5px;
+        margin: 10px 2px 0;
+      }
+
+      /* ---- API pipelines ---- */
+      .api {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 0;
+        margin-bottom: 26px;
+        overflow: hidden;
+        scroll-margin-top: 64px;
+      }
+      .api-head {
+        padding: 18px 22px 14px;
+        border-bottom: 1px solid var(--border);
+      }
+      .api-name {
+        font-family: var(--mono);
+        font-size: 19px;
+        color: var(--cyan);
+      }
+      .api-kind {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--bg);
+        padding: 2px 9px;
+        border-radius: 999px;
+        margin-left: 10px;
+        vertical-align: 2px;
+        font-weight: 700;
+      }
+      .api-sig {
+        font-family: var(--mono);
+        font-size: 12.5px;
+        color: var(--fg-dim);
+        margin-top: 8px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .api-blurb {
+        color: var(--fg-dim);
+        font-size: 14px;
+        margin-top: 8px;
+        max-width: 760px;
+      }
+      .api-body {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 0;
+      }
+      @media (max-width: 880px) {
+        .api-body {
+          grid-template-columns: 1fr;
+        }
+        .graph-wrap {
+          grid-template-columns: 1fr;
+        }
+        .detail {
+          position: static;
+        }
+      }
+      .api-col {
+        padding: 16px 20px 20px;
+      }
+      .api-col.code {
+        border-right: 1px solid var(--border);
+      }
+      @media (max-width: 880px) {
+        .api-col.code {
+          border-right: none;
+          border-bottom: 1px solid var(--border);
+        }
+      }
+      .col-label {
+        font-family: var(--mono);
+        font-size: 10.5px;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--muted);
+        margin-bottom: 10px;
+      }
+      pre.code {
+        margin: 0;
+        font-family: var(--mono);
+        font-size: 12.5px;
+        line-height: 1.62;
+        white-space: pre;
+        overflow-x: auto;
+        color: var(--fg);
+        tab-size: 2;
+      }
+      pre.code .k {
+        color: var(--purple);
+      }
+      pre.code .s {
+        color: var(--green);
+      }
+      pre.code .c {
+        color: var(--muted);
+        font-style: italic;
+      }
+      pre.code .t {
+        color: var(--cyan);
+      }
+      pre.code .num {
+        color: var(--orange);
+      }
+
+      /* pipeline steps */
+      .pipe {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+      }
+      .step {
+        position: relative;
+        padding: 0 0 16px 28px;
+        border-left: 2px solid var(--border);
+        margin-left: 6px;
+      }
+      .step:last-child {
+        border-left-color: transparent;
+        padding-bottom: 0;
+      }
+      .step .num {
+        position: absolute;
+        left: -13px;
+        top: -2px;
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        color: var(--blue);
+        font-family: var(--mono);
+        font-size: 12px;
+        display: grid;
+        place-items: center;
+      }
+      .step .files {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-bottom: 4px;
+      }
+      .step .stext {
+        color: var(--fg-dim);
+        font-size: 13px;
+      }
+      .step .stext b {
+        color: var(--fg);
+        font-weight: 600;
+      }
+      .step.out .num {
+        color: var(--green);
+        border-color: var(--green);
+      }
+      .api-note {
+        margin: 0 20px 20px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--yellow);
+        border-radius: 10px;
+        padding: 11px 14px;
+        font-size: 13px;
+        color: var(--fg-dim);
+      }
+      .api-note b {
+        color: var(--yellow);
+      }
+
+      .fref {
+        font-family: var(--mono);
+        font-size: 11px;
+        padding: 3px 8px;
+        border-radius: 6px;
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        color: var(--fg-dim);
+        cursor: pointer;
+        white-space: nowrap;
+        transition: 0.12s;
+      }
+      .fref:hover {
+        color: var(--fg);
+        border-color: var(--blue);
+      }
+      .fref .dir {
+        color: var(--muted);
+      }
+
+      footer {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 30px 24px 60px;
+        border-top: 1px solid var(--border);
+        color: var(--muted);
+        font-family: var(--mono);
+        font-size: 13px;
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        gap: 10px;
+      }
+      .flash {
+        animation: flash 1.1s ease;
+      }
+      @keyframes flash {
+        0%,
+        100% {
+          box-shadow: 0 0 0 0 transparent;
+        }
+        25% {
+          box-shadow: 0 0 0 2px var(--blue);
+        }
+      }
+
+      /* ---- per-file detail ---- */
+      .fc-toolbar {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .fc-btn {
+        font-family: var(--mono);
+        font-size: 12px;
+        color: var(--fg-dim);
+        background: var(--bg3);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 6px 12px;
+        cursor: pointer;
+        transition: 0.12s;
+      }
+      .fc-btn:hover {
+        color: var(--fg);
+        border-color: var(--muted);
+      }
+      .fc-group-title {
+        font-family: var(--mono);
+        font-size: 13px;
+        color: var(--orange);
+        margin: 26px 0 10px;
+        letter-spacing: 0.04em;
+      }
+      .filecard {
+        background: var(--bg2);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        margin-bottom: 9px;
+        overflow: hidden;
+        scroll-margin-top: 70px;
+      }
+      .filecard-head {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        background: none;
+        border: none;
+        color: var(--fg);
+        padding: 12px 15px;
+        cursor: pointer;
+        font-family: inherit;
+        text-align: left;
+      }
+      .filecard-head:hover {
+        background: var(--bg3);
+      }
+      .fc-path {
+        font-family: var(--mono);
+        font-size: 13.5px;
+      }
+      .fc-path .dir {
+        color: var(--muted);
+      }
+      .fc-meta {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        flex: none;
+      }
+      .fc-kind {
+        font-family: var(--mono);
+        font-size: 10px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+      .fc-layer {
+        font-family: var(--mono);
+        font-size: 11px;
+        color: var(--muted);
+      }
+      .chev {
+        color: var(--muted);
+        transition: transform 0.15s;
+        display: inline-block;
+      }
+      .filecard.open .chev {
+        transform: rotate(90deg);
+      }
+      .filecard-body {
+        display: none;
+        padding: 0 15px 15px;
+        border-top: 1px solid var(--border);
+      }
+      .filecard.open .filecard-body {
+        display: block;
+      }
+      .fc-role {
+        color: var(--fg-dim);
+        font-size: 13.5px;
+        margin: 14px 0 12px;
+        max-width: 780px;
+      }
+      .filecard-body pre.code {
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 13px 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="topnav">
+      <div class="topnav-inner">
+        <span class="logo">responsive-keepalive</span>
+        <nav>
+          <a href="#overview">Overview</a>
+          <a href="#architecture">Architecture</a>
+          <a href="#graph">Reference Graph</a>
+          <a href="#pipelines">API Pipelines</a>
+          <a href="#files">Files</a>
+        </nav>
+      </div>
+    </div>
+
+    <div class="wrap">
+      <!-- HERO -->
+      <section class="hero" id="overview">
+        <div class="eyebrow">whole-library reference</div>
+        <h1>Architecture &amp; API Pipelines</h1>
+        <p class="lead">
+          A reference for <b>how the 24 source files reference each other</b> and
+          <b>which files each exported API call passes through</b>.
+        </p>
+
+        <div class="thesis">
+          Uses React 19.2's <b>&lt;Activity mode="visible|hidden"&gt;</b> to keep structurally
+          different mobile/desktop trees <b>mounted with state preserved</b> across breakpoint switches.
+          Scroll position, input values, and open states survive the switch.
+          Automatically falls back to a clean swap on runtimes without Activity.
+        </div>
+
+        <div class="pillrow">
+          <span class="pill">React 19.2 · &lt;Activity&gt;</span>
+          <span class="pill">7 public APIs</span>
+          <span class="pill">24 source files · 4 layers</span>
+          <span class="pill">integer px breakpoints</span>
+          <span class="pill">SSR-safe · useSyncExternalStore</span>
+        </div>
+      </section>
+
+      <!-- ARCHITECTURE -->
+      <section id="architecture">
+        <div class="eyebrow">layered architecture</div>
+        <h2>4 Layers</h2>
+        <p class="sec-desc">
+          Imports always flow from upper layers → down to lower layers (no cycles). Lower layers are
+          more pure and less React-dependent. Click a chip to select that file in the graph below.
+        </p>
+        <div class="layers" id="layers"></div>
+      </section>
+
+      <!-- GRAPH -->
+      <section id="graph">
+        <div class="eyebrow">file reference graph</div>
+        <h2>File Reference Graph</h2>
+        <p class="sec-desc">
+          Click a node to highlight the files it <b style="color: var(--orange)">imports (orange)</b>
+          and the files that <b style="color: var(--blue)">import it (blue)</b>. Dashed lines are type-only imports.
+        </p>
+        <div class="graph-wrap">
+          <div class="graph-box">
+            <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+          <aside class="detail" id="detail">
+            <div class="dt-file">Click a node</div>
+            <div class="dt-role" style="margin-top: 10px">
+              Select a file in the graph to see its role and dependencies here.
+            </div>
+          </aside>
+        </div>
+        <div class="legend" id="legend"></div>
+        <div class="graph-hint">
+          ← Left = pure / leaf &nbsp;·&nbsp; Right = top-level (barrel index.ts).
+          Solid line = value import, dashed = type-only import, bold = re-export from index.ts.
+        </div>
+      </section>
+
+      <!-- PIPELINES -->
+      <section id="pipelines">
+        <div class="eyebrow">consumer api → data pipeline</div>
+        <h2>Usage Examples &amp; Data Pipelines per API</h2>
+        <p class="sec-desc">
+          For each of the 7 exported APIs, shows consumer code and the file pipeline each call travels
+          through. Click a file chip in any step to select that file in the graph above.
+        </p>
+        <div id="apis"></div>
+      </section>
+      <!-- FILES -->
+      <section id="files">
+        <div class="eyebrow">file-by-file</div>
+        <h2>File Contents &amp; Roles</h2>
+        <p class="sec-desc">
+          Role and source code for all 24 source files (tests excluded). Click a header to expand.
+          File chips in the graph and pipelines, and the "View source" button in the detail panel,
+          also navigate here.
+        </p>
+        <div class="fc-toolbar">
+          <button class="fc-btn" id="fcExpand" type="button">Expand All</button>
+          <button class="fc-btn" id="fcCollapse" type="button">Collapse All</button>
+        </div>
+        <div id="fileGroups"></div>
+      </section>
+    </div>
+
+    <footer>
+      <span>responsive-keepalive · architecture &amp; pipelines</span>
+    </footer>
+
+    <div id="srcblobs" style="display:none" aria-hidden="true">
+<script type="text/plain" class="srcblob" data-id="types">
+import type { ReactElement, ReactNode } from 'react';
+
+export type Strategy = 'keepAlive' | 'swap';
+export type Mount = 'lazy' | 'eager';
+
+/**
+ * Map of variant key → the content to render for that variant. Each value may be a
+ * React node (`<Layout />`, the ergonomic default) or a function returning one
+ * (`() => <Layout />`, which additionally defers creating the node until the
+ * variant is mounted — worth it only for heavy trees that may never be shown).
+ * Unused branches still cost nothing under lazy mount.
+ */
+export type VariantMap<K extends string> = Record<K, ReactNode | (() => ReactNode)>;
+
+export interface ResponsiveProps<K extends string> {
+  /**
+   * The active variant key. Caller-controlled — derive it however you like
+   * (viewport via `useMediaVariant`, a feature flag, an SSR header, etc.).
+   */
+  variant: NoInfer<K>;
+  /** Map of variant key → render function. */
+  variants: VariantMap<K>;
+  /**
+   * - `keepAlive` (default): inactive variants stay mounted with their state
+   *   preserved, hidden via React's `<Activity>`. Effects suspend while hidden.
+   * - `swap`: only the active variant is mounted; switching unmounts the previous one.
+   */
+  strategy?: Strategy;
+  /**
+   * - `lazy` (default): a variant mounts on first activation, then is kept alive.
+   * - `eager`: all variants mount immediately. Only affects `keepAlive`.
+   */
+  mount?: Mount;
+}
+
+export interface MediaVariantOptions<K extends string> {
+  /** Variant returned on the server and before hydration (avoids a mismatch). */
+  ssr?: K;
+  /**
+   * Anti-thrash. Commit a variant change only after the new value has been stable
+   * for this many milliseconds. `0` (default) commits immediately.
+   */
+  settleMs?: number;
+  /**
+   * Hold variant switches while an IME composition is active, applying the pending
+   * variant once composition ends. Default `false`.
+   */
+  deferWhileComposing?: boolean;
+}
+
+/** @internal Shared props for the strategy renderer components. */
+export interface VariantRenderProps<K extends string> {
+  variant: K;
+  variants: VariantMap<K>;
+}
+
+export interface ContainerVariantOptions<K extends string> {
+  /** Variant returned before the first measurement and on the server. */
+  ssr?: K;
+  /** Anti-thrash: commit a variant change only after the width is stable for N ms. */
+  settleMs?: number;
+}
+
+export interface ResponsiveValueOptions<K extends string> {
+  /** Variant whose value is returned on the server and before hydration. */
+  ssr?: K;
+  /** Anti-thrash: commit a change only after the matched variant is stable for N ms. */
+  settleMs?: number;
+}
+
+/**
+ * Breakpoint configuration for `createResponsive`: integer pixel min-width
+ * thresholds that derive non-overlapping mobile-first bands (the lowest threshold
+ * is the floor; usually `0`). Media-query strings are not accepted.
+ */
+export type BreakpointConfig<K extends string> = Record<K, number>;
+
+/**
+ * Media input for the low-level hooks (`useMediaVariant`, `useResponsiveValue`): either
+ * integer px breakpoints (converted to non-overlapping mobile-first bands, like
+ * `createResponsive`) or raw media-query strings (passed through — use these for
+ * non-width features like orientation). The two forms must not be mixed.
+ */
+export type MediaInput<K extends string> = Record<K, number> | Record<K, string>;
+
+/** Resolution options applied by a configured `<Responsive>` / `useVariant`. */
+export interface CreateResponsiveOptions<K extends string> {
+  ssr?: K;
+  settleMs?: number;
+  deferWhileComposing?: boolean;
+}
+
+/**
+ * Props of a configured `<Responsive>`: one required render-function prop per
+ * variant key, plus optional rendering and resolution controls. The variant keys
+ * come from the `createResponsive` config, so missing or unknown keys are type
+ * errors.
+ */
+export type ConfiguredResponsiveProps<K extends string> = {
+  [P in K]: ReactNode | (() => ReactNode);
+} & {
+  strategy?: Strategy;
+  mount?: Mount;
+  ssr?: K;
+  settleMs?: number;
+  deferWhileComposing?: boolean;
+};
+
+/** The configured primitives returned by `createResponsive`. */
+export interface ConfiguredResponsive<K extends string> {
+  /** Self-resolving `<Responsive>` with one render-prop per variant. */
+  Responsive: (props: ConfiguredResponsiveProps<K>) => ReactElement;
+  /** Root provider: hosts the shared-state scope and an optional SSR variant override. */
+  Provider: (props: ResponsiveProviderProps<K>) => ReactElement;
+  /** Composable keep-alive gate components, one per variant key, PascalCased (e.g. `Match.Desktop`). */
+  Match: { [P in K as Capitalize<P>]: (props: MatchProps) => ReactElement };
+  /** The active variant key for the configured breakpoints. */
+  useVariant: (options?: CreateResponsiveOptions<K>) => K;
+  /** Pick a value per configured breakpoint (queries are pre-bound). */
+  useResponsiveValue: <V>(
+    values: Record<K, V>,
+    options?: Omit<CreateResponsiveOptions<K>, 'deferWhileComposing'>,
+  ) => V;
+  /** The resolved media-query map (e.g. to reuse with the low-level hooks). */
+  breakpoints: Record<K, string>;
+}
+
+/** Props for the root provider returned by `createResponsive`. */
+export interface ResponsiveProviderProps<K extends string> {
+  children: ReactNode;
+  /** Override the SSR/initial variant for this subtree (e.g. a request-derived value in Next). */
+  ssr?: K;
+}
+
+/** Props for a `Match` gate component. */
+export interface MatchProps {
+  children: ReactNode;
+  /**
+   * `true` (default): keep this branch mounted across breakpoint changes via
+   * `<Activity>` (hidden when inactive), preserving its state. `false`: unmount
+   * when inactive — lighter, but state is lost on switch (a plain media gate).
+   */
+  keepAlive?: boolean;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="query/breakpointsToQueries">
+/**
+ * Pure: convert integer px min-width thresholds into a non-overlapping, mobile-first
+ * media-query map. Shared by `createResponsive` and the low-level media hooks.
+ *
+ * Breakpoints are **integers only** (pixel min-widths). Media-query strings are no
+ * longer accepted: they are rejected at compile time by the `number` type and at
+ * runtime by validation, because hand-written query strings are an easy source of
+ * human error (typos, wrong units, overlapping ranges). Authoring plain numbers and
+ * deriving the queries here keeps them correct and non-overlapping by construction.
+ *
+ * Entries are sorted ascending so the floor variant comes first (the natural default
+ * `ssr`). A floor of `0` yields a pure `max-width` band; the top band is an open
+ * `min-width`. A non-zero floor leaves a deliberate gap below it (widths under it
+ * match nothing and fall back to `ssr`).
+ */
+export function breakpointsToQueries<K extends string>(
+  breakpoints: Record<K, number>,
+): Record<K, string> {
+  const entries = Object.entries(breakpoints) as [K, number][];
+  if (entries.length === 0) {
+    throw new Error('[responsive-keepalive] breakpoints must not be empty.');
+  }
+  for (const [key, value] of entries) {
+    if (!Number.isInteger(value) || value < 0) {
+      throw new Error(
+        `[responsive-keepalive] breakpoint "${key}" must be a non-negative integer of pixels, received ${String(value)}.`,
+      );
+    }
+  }
+
+  const sorted = entries.slice().sort((a, b) => a[1] - b[1]);
+  const result = {} as Record<K, string>;
+  sorted.forEach(([key, min], i) => {
+    const next = sorted[i + 1];
+    const parts: string[] = [];
+    if (min > 0) parts.push(`(min-width: ${min}px)`);
+    if (next) parts.push(`(max-width: ${next[1] - 1}px)`);
+    result[key] = parts.length > 0 ? parts.join(' and ') : '(min-width: 0px)';
+  });
+  return result;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="media/createMediaQueryStore">
+export interface MediaQueryStore<K extends string> {
+  subscribe: (onChange: () => void) => () => void;
+  getSnapshot: () => K;
+  getServerSnapshot: () => K;
+}
+
+/**
+ * Pure factory (no React) producing a `useSyncExternalStore`-compatible store that
+ * maps a set of media queries to a variant key. The first matching query in object
+ * order wins; otherwise `fallback` is returned. Server/SSR always returns `fallback`.
+ *
+ * Isolating this from React makes the matchMedia logic unit-testable on its own.
+ */
+export function createMediaQueryStore<K extends string>(
+  queries: Record<K, string>,
+  fallback: K,
+): MediaQueryStore<K> {
+  const keys = Object.keys(queries) as K[];
+
+  const subscribe = (onChange: () => void): (() => void) => {
+    if (typeof window === 'undefined' || !window.matchMedia) return () => {};
+    const lists = keys.map((key) => window.matchMedia(queries[key]));
+    for (const list of lists) list.addEventListener('change', onChange);
+    return () => {
+      for (const list of lists) list.removeEventListener('change', onChange);
+    };
+  };
+
+  const getSnapshot = (): K => {
+    if (typeof window === 'undefined' || !window.matchMedia) return fallback;
+    for (const key of keys) {
+      if (window.matchMedia(queries[key]).matches) return key;
+    }
+    return fallback;
+  };
+
+  const getServerSnapshot = (): K => fallback;
+
+  return { subscribe, getSnapshot, getServerSnapshot };
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="policies/useSettledValue">
+import { useEffect, useState } from 'react';
+
+/**
+ * Returns `value`, but when `settleMs > 0` only commits a change after the value
+ * has been stable for `settleMs`. Rapid flip-flops reset the timer, so transient
+ * values never surface. `settleMs <= 0` passes through immediately.
+ *
+ * A generic anti-thrash primitive — independent of any media-query concern.
+ */
+export function useSettledValue<T>(value: T, settleMs: number): T {
+  const [settled, setSettled] = useState(value);
+
+  useEffect(() => {
+    if (settleMs <= 0) {
+      setSettled(value);
+      return;
+    }
+    const id = setTimeout(() => setSettled(value), settleMs);
+    return () => clearTimeout(id);
+  }, [value, settleMs]);
+
+  return settleMs <= 0 ? value : settled;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="policies/useHeldWhileComposing">
+import { useEffect, useRef, useState } from 'react';
+
+/**
+ * Returns `value`, but while an IME composition is in progress (detected
+ * document-wide via bubbling `compositionstart`/`compositionend`) holds the
+ * previously committed value and applies the latest one on `compositionend`.
+ * No-op, with no listeners attached, when `enabled` is `false`.
+ *
+ * Prevents interrupting Hangul/CJK input mid-syllable when an upstream value
+ * (e.g. a layout variant) changes.
+ */
+export function useHeldWhileComposing<T>(value: T, enabled: boolean): T {
+  const [held, setHeld] = useState(value);
+  const composingRef = useRef(false);
+  const latestRef = useRef(value);
+  latestRef.current = value;
+
+  useEffect(() => {
+    if (!enabled || typeof document === 'undefined') return;
+    const onStart = () => {
+      composingRef.current = true;
+    };
+    const onEnd = () => {
+      composingRef.current = false;
+      setHeld(latestRef.current);
+    };
+    document.addEventListener('compositionstart', onStart);
+    document.addEventListener('compositionend', onEnd);
+    return () => {
+      document.removeEventListener('compositionstart', onStart);
+      document.removeEventListener('compositionend', onEnd);
+    };
+  }, [enabled]);
+
+  useEffect(() => {
+    if (!enabled) {
+      setHeld(value);
+      return;
+    }
+    if (!composingRef.current) setHeld(value);
+  }, [value, enabled]);
+
+  return enabled ? held : value;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="responsive/renderVariant">
+import type { ReactNode } from 'react';
+
+/**
+ * A variant's content may be given as a React node (`<Layout />`) or as a function
+ * returning one (`() => <Layout />`). Both are supported: the node form is the
+ * ergonomic default; the function form additionally defers creating the node until
+ * the variant is mounted, which is worth it only for heavy trees that may never be
+ * shown. This normalizes either form to a node at render time.
+ */
+export function renderVariant(value: ReactNode | (() => ReactNode)): ReactNode {
+  return typeof value === 'function' ? value() : value;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="responsive/resolveMountedKeys">
+import type { Mount } from '../types';
+
+/**
+ * Pure: decides which variant keys should be mounted.
+ *
+ * - `eager` → all keys.
+ * - `lazy`  → only keys that have been activated at least once (kept alive after),
+ *   preserving the original key order.
+ */
+export function resolveMountedKeys<K extends string>(
+  allKeys: readonly K[],
+  mount: Mount,
+  activated: ReadonlySet<string>,
+): K[] {
+  if (mount === 'eager') return [...allKeys];
+  return allKeys.filter((key) => activated.has(key));
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="container/resolveContainerVariant">
+/**
+ * Pure: given a measured width and a map of variant → minimum width, returns the
+ * variant with the greatest minimum width that does not exceed `width`. If the
+ * width is below every threshold, the variant with the smallest minimum width
+ * (the floor) wins, so a variant is always selected.
+ */
+export function resolveContainerVariant<K extends string>(
+  width: number,
+  breakpoints: Record<K, number>,
+): K {
+  const entries = (Object.entries(breakpoints) as [K, number][]).sort((a, b) => a[1] - b[1]);
+  const floor = entries[0];
+  if (!floor) {
+    throw new Error('[responsive-keepalive] useContainerVariant: breakpoints must not be empty');
+  }
+
+  let matched: K = floor[0];
+  for (const [key, minWidth] of entries) {
+    if (width >= minWidth) matched = key;
+  }
+  return matched;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="container/useElementWidth">
+import { useEffect, useState, type RefObject } from 'react';
+
+/**
+ * Tracks the content-box width of the referenced element via ResizeObserver.
+ * Returns `null` until the first measurement (and on the server, or where
+ * ResizeObserver is unavailable).
+ */
+export function useElementWidth<E extends Element = Element>(
+  ref: RefObject<E | null>,
+): number | null {
+  const [width, setWidth] = useState<number | null>(null);
+
+  useEffect(() => {
+    const element = ref.current;
+    if (!element || typeof ResizeObserver === 'undefined') return;
+    const observer = new ResizeObserver((entries) => {
+      const entry = entries[0];
+      if (entry) setWidth(entry.contentRect.width);
+    });
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, [ref]);
+
+  return width;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="shared/createSharedStore">
+/** A keyed value store with per-key subscriptions. React-free and unit-testable. */
+export interface SharedStore {
+  has(key: string): boolean;
+  get(key: string): unknown;
+  set(key: string, value: unknown): void;
+  subscribe(key: string, listener: () => void): () => void;
+}
+
+export function createSharedStore(): SharedStore {
+  const values = new Map<string, unknown>();
+  const listeners = new Map<string, Set<() => void>>();
+
+  return {
+    has: (key) => values.has(key),
+    get: (key) => values.get(key),
+    set: (key, value) => {
+      values.set(key, value);
+      const subs = listeners.get(key);
+      if (subs) for (const listener of subs) listener();
+    },
+    subscribe: (key, listener) => {
+      let subs = listeners.get(key);
+      if (!subs) {
+        subs = new Set();
+        listeners.set(key, subs);
+      }
+      subs.add(listener);
+      return () => {
+        const current = listeners.get(key);
+        if (!current) return;
+        current.delete(listener);
+        if (current.size === 0) listeners.delete(key);
+      };
+    },
+  };
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="platform/activity">
+import * as React from 'react';
+
+/**
+ * The platform boundary for React's `<Activity>` (Dependency Inversion): the rest
+ * of the library depends on this module, not on `react` directly, so the single
+ * platform concretion lives in one place and is trivially mockable in tests.
+ *
+ * Accessed via namespace so that on React < 19.2 (where `Activity` is absent) this
+ * resolves to `undefined` instead of throwing on a missing named import.
+ */
+export const Activity = React.Activity;
+
+/** Whether keep-alive (`<Activity>`) is available in the current React runtime. */
+export function isActivitySupported(): boolean {
+  return typeof React.Activity !== 'undefined';
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="internal/warnOnce">
+const seen = new Set<string>();
+
+/** Emits a `console.warn` at most once per distinct message. */
+export function warnOnce(message: string): void {
+  if (seen.has(message)) return;
+  seen.add(message);
+  console.warn(message);
+}
+
+/** @internal Test hook: clears the dedupe set so a message can warn again. */
+export function resetWarnings(): void {
+  seen.clear();
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="query/normalizeQueries">
+import type { MediaInput } from '../types';
+import { breakpointsToQueries } from './breakpointsToQueries';
+
+/**
+ * Normalizes a low-level hook's media input to query strings. Integer px breakpoints
+ * are converted to non-overlapping mobile-first bands (identical to `createResponsive`);
+ * raw media-query strings pass through unchanged, so non-width features (orientation,
+ * prefers-color-scheme, min-height, …) remain expressible at the low level. The two
+ * forms must not be mixed.
+ */
+export function normalizeQueries<K extends string>(input: MediaInput<K>): Record<K, string> {
+  const values = Object.values(input);
+  const numberCount = values.filter((v) => typeof v === 'number').length;
+  if (numberCount > 0 && numberCount < values.length) {
+    throw new Error(
+      '[responsive-keepalive] media input must be all integer breakpoints or all media-query strings, not a mix.',
+    );
+  }
+  return numberCount > 0
+    ? breakpointsToQueries(input as Record<K, number>)
+    : (input as Record<K, string>);
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="media/useMatchedVariant">
+import { useRef, useSyncExternalStore } from 'react';
+import { createMediaQueryStore, type MediaQueryStore } from './createMediaQueryStore';
+
+/**
+ * Returns the variant whose media query currently matches — the *raw* result with
+ * no switch policies applied. SSR-safe via `useSyncExternalStore`.
+ *
+ * This is the observation primitive that the public `useMediaVariant` builds on
+ * (the latter adds anti-thrash and IME handling on top). The store is cached and
+ * only rebuilt when the queries or fallback actually change, keeping `subscribe`
+ * stable across renders even though callers usually pass a fresh `queries` object.
+ */
+export function useMatchedVariant<K extends string>(queries: Record<K, string>, fallback: K): K {
+  const cacheKey = `${JSON.stringify(queries)}\u0000${fallback}`;
+  const cache = useRef<{ key: string; store: MediaQueryStore<K> } | null>(null);
+
+  if (cache.current === null || cache.current.key !== cacheKey) {
+    cache.current = { key: cacheKey, store: createMediaQueryStore(queries, fallback) };
+  }
+
+  const { store } = cache.current;
+  return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getServerSnapshot);
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="shared/SharedStateScope">
+import { createContext, useRef, type ReactNode } from 'react';
+import { createSharedStore, type SharedStore } from './createSharedStore';
+
+export const SharedStateContext = createContext<SharedStore | null>(null);
+
+/**
+ * Provides a shared-state store to its subtree, so descendants can synchronize
+ * state via `useSharedState` without lifting it to a common parent.
+ *
+ * One store is created per scope instance (SSR-safe: fresh per render tree, no
+ * cross-request leakage). `<Responsive>` mounts a scope automatically, so the
+ * common case needs no explicit provider; use this directly to share state
+ * between siblings that are not under a `<Responsive>`.
+ */
+export function SharedStateScope({ children }: { children: ReactNode }) {
+  const storeRef = useRef<SharedStore | null>(null);
+  if (storeRef.current === null) {
+    storeRef.current = createSharedStore();
+  }
+  return (
+    <SharedStateContext.Provider value={storeRef.current}>{children}</SharedStateContext.Provider>
+  );
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="responsive/SwapVariant">
+import { Fragment } from 'react';
+import type { VariantRenderProps } from '../types';
+import { renderVariant } from './renderVariant';
+
+/**
+ * Renders only the active variant. Keyed by `variant` so a change forces a clean
+ * unmount/mount — i.e. true swap semantics, with no state preservation.
+ */
+export function SwapVariant<K extends string>({ variant, variants }: VariantRenderProps<K>) {
+  return <Fragment key={variant}>{renderVariant(variants[variant])}</Fragment>;
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="responsive/KeepAliveVariants">
+import { useRef } from 'react';
+import { Activity } from '../platform/activity';
+import type { Mount, VariantRenderProps } from '../types';
+import { renderVariant } from './renderVariant';
+import { resolveMountedKeys } from './resolveMountedKeys';
+
+interface KeepAliveVariantsProps<K extends string> extends VariantRenderProps<K> {
+  mount: Mount;
+}
+
+/**
+ * Renders the mounted variants wrapped in `<Activity>`, keeping inactive ones
+ * alive (state preserved) while hidden. Owns the lazy-mount bookkeeping; the
+ * "which keys" decision is delegated to the pure {@link resolveMountedKeys}.
+ *
+ * Only rendered when `<Activity>` is available (see `Responsive`).
+ */
+export function KeepAliveVariants<K extends string>({
+  variant,
+  variants,
+  mount,
+}: KeepAliveVariantsProps<K>) {
+  const activated = useRef<Set<string>>(new Set());
+  activated.current.add(variant);
+
+  const allKeys = Object.keys(variants) as K[];
+  const mountedKeys = resolveMountedKeys(allKeys, mount, activated.current);
+
+  return (
+    <>
+      {mountedKeys.map((key) => (
+        // Stable key → stable tree position → state preserved across switches.
+        <Activity key={key} mode={key === variant ? 'visible' : 'hidden'}>
+          {renderVariant(variants[key])}
+        </Activity>
+      ))}
+    </>
+  );
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="media/useMediaVariant">
+import { useHeldWhileComposing } from '../policies/useHeldWhileComposing';
+import { useSettledValue } from '../policies/useSettledValue';
+import { normalizeQueries } from '../query/normalizeQueries';
+import type { MediaInput, MediaVariantOptions } from '../types';
+import { useMatchedVariant } from './useMatchedVariant';
+
+/**
+ * Maps a set of breakpoints to a variant key, suitable for `<Responsive variant>`.
+ *
+ * `breakpoints` may be **integer px min-widths** — converted to non-overlapping
+ * mobile-first bands, exactly like `createResponsive` — or **raw media-query strings**,
+ * which stay available for non-width features (orientation, prefers-color-scheme, …).
+ *
+ * A thin composition of three single-purpose hooks (switch policy applied
+ * outermost-wins): `useMatchedVariant` (raw match) → `useSettledValue` (anti-thrash) →
+ * `useHeldWhileComposing` (IME hold).
+ *
+ * @example
+ * // integer breakpoints (recommended for width bands)
+ * const variant = useMediaVariant({ mobile: 0, desktop: 768 }, { ssr: 'mobile', settleMs: 150 });
+ *
+ * @example
+ * // raw queries for non-width features
+ * const orientation = useMediaVariant({
+ *   portrait: '(orientation: portrait)',
+ *   landscape: '(orientation: landscape)',
+ * });
+ */
+export function useMediaVariant<K extends string>(
+  breakpoints: MediaInput<K>,
+  options: MediaVariantOptions<NoInfer<K>> = {},
+): K {
+  const queries = normalizeQueries(breakpoints);
+  const keys = Object.keys(queries) as K[];
+  const fallback = (options.ssr ?? keys[0]) as K;
+
+  const raw = useMatchedVariant(queries, fallback);
+  const settled = useSettledValue(raw, options.settleMs ?? 0);
+  return useHeldWhileComposing(settled, options.deferWhileComposing ?? false);
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="media/useResponsiveValue">
+import { useSettledValue } from '../policies/useSettledValue';
+import { normalizeQueries } from '../query/normalizeQueries';
+import type { MediaInput, ResponsiveValueOptions } from '../types';
+import { useMatchedVariant } from './useMatchedVariant';
+
+/**
+ * Selects a value per breakpoint — the scalar counterpart to `<Responsive>`. Returns
+ * `values[variant]`, where `variant` is the first matching band (in object order).
+ * Handy for responsive numbers, sizes, or labels (column counts, gaps, copy) where a
+ * whole component tree would be overkill.
+ *
+ * `breakpoints` accepts integer px min-widths or raw media-query strings, just like
+ * `useMediaVariant`.
+ *
+ * @example
+ * const columns = useResponsiveValue(
+ *   { mobile: 0, desktop: 768 },
+ *   { mobile: 1, desktop: 3 },
+ *   { ssr: 'mobile' },
+ * );
+ */
+export function useResponsiveValue<K extends string, V>(
+  breakpoints: MediaInput<K>,
+  values: Record<K, V>,
+  options: ResponsiveValueOptions<NoInfer<K>> = {},
+): V {
+  const queries = normalizeQueries(breakpoints);
+  const keys = Object.keys(queries) as K[];
+  const fallback = (options.ssr ?? keys[0]) as K;
+  const variant = useMatchedVariant(queries, fallback);
+  const settled = useSettledValue(variant, options.settleMs ?? 0);
+  return values[settled];
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="container/useContainerVariant">
+import type { RefObject } from 'react';
+import { useSettledValue } from '../policies/useSettledValue';
+import type { ContainerVariantOptions } from '../types';
+import { resolveContainerVariant } from './resolveContainerVariant';
+import { useElementWidth } from './useElementWidth';
+
+/**
+ * Like `useMediaVariant`, but selects a variant from the *container's* width (via
+ * ResizeObserver) rather than the viewport. Use it when a component must render
+ * structurally different trees based on the space it occupies — e.g. a card that
+ * is a row in a wide column but a stack in a narrow one.
+ *
+ * `breakpoints` maps each variant to a minimum width; the largest threshold not
+ * exceeding the measured width wins (the floor variant applies below all
+ * thresholds). Before the first measurement (and on the server) the `ssr` variant,
+ * or the floor, is returned.
+ *
+ * @example
+ * const ref = useRef<HTMLDivElement>(null);
+ * const variant = useContainerVariant(ref, { stack: 0, row: 480 }, { ssr: 'stack' });
+ * return (
+ *   <div ref={ref}>
+ *     <Responsive variant={variant} variants={{ stack: () => <Stack />, row: () => <Row /> }} />
+ *   </div>
+ * );
+ */
+export function useContainerVariant<K extends string, E extends Element = Element>(
+  ref: RefObject<E | null>,
+  breakpoints: Record<K, number>,
+  options: ContainerVariantOptions<NoInfer<K>> = {},
+): K {
+  const fallback = (options.ssr ?? resolveContainerVariant(0, breakpoints)) as K;
+  const width = useElementWidth(ref);
+  const raw = width === null ? fallback : resolveContainerVariant(width, breakpoints);
+  return useSettledValue(raw, options.settleMs ?? 0);
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="shared/useSharedState">
+import { useCallback, useContext, useRef, useSyncExternalStore } from 'react';
+import { SharedStateContext } from './SharedStateScope';
+
+export type SetSharedState<T> = (next: T | ((prev: T) => T)) => void;
+
+/**
+ * A `useState`-shaped hook whose state is shared by key across every call site in
+ * the same scope. Declare it independently inside sibling components (e.g. a
+ * Mobile and a Desktop layout) and writes from one are reflected in the others —
+ * no lifting required. Must be used within `<Responsive>` or `<SharedStateScope>`.
+ *
+ * Because the store lives in the scope (a stable ancestor), the value also
+ * survives `strategy="swap"` and keep-alive switches. Use the **same key and the
+ * same initial value** at every call site; the first present value wins.
+ *
+ * @example
+ * // inside both MobileLayout and DesktopLayout, with no parent state:
+ * const [query, setQuery] = useSharedState('search', '');
+ */
+export function useSharedState<T>(key: string, initialValue: T): [T, SetSharedState<T>] {
+  const store = useContext(SharedStateContext);
+  if (store === null) {
+    throw new Error(
+      '[responsive-keepalive] useSharedState must be used within <Responsive> or <SharedStateScope>.',
+    );
+  }
+
+  const initialRef = useRef(initialValue); // stable initial across renders
+
+  const subscribe = useCallback(
+    (onChange: () => void) => store.subscribe(key, onChange),
+    [store, key],
+  );
+  const getSnapshot = useCallback(
+    (): T => (store.has(key) ? (store.get(key) as T) : initialRef.current),
+    [store, key],
+  );
+
+  const value = useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
+
+  const setValue = useCallback<SetSharedState<T>>(
+    (next) => {
+      const prev = store.has(key) ? (store.get(key) as T) : initialRef.current;
+      const resolved = typeof next === 'function' ? (next as (p: T) => T)(prev) : next;
+      store.set(key, resolved);
+    },
+    [store, key],
+  );
+
+  return [value, setValue];
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="responsive/Responsive">
+import type { ReactNode } from 'react';
+import { isActivitySupported } from '../platform/activity';
+import { warnOnce } from '../internal/warnOnce';
+import type { ResponsiveProps } from '../types';
+import { SharedStateScope } from '../shared/SharedStateScope';
+import { KeepAliveVariants } from './KeepAliveVariants';
+import { SwapVariant } from './SwapVariant';
+
+const ACTIVITY_FALLBACK_WARNING =
+  '[responsive-keepalive] React.Activity is unavailable (needs React 19.2+). ' +
+  'Falling back to "swap"; state is NOT preserved across variants.';
+
+/**
+ * Render genuinely different component trees per breakpoint/variant without losing
+ * state when the active variant changes.
+ *
+ * State local to a branch (scroll, open/closed, selection, an in-progress edit) is
+ * preserved automatically by keep-alive. State that must be shared across variants
+ * should be lifted above `<Responsive>` and passed into the render functions — the
+ * two compose.
+ *
+ * This component is a thin dispatcher: it selects the keep-alive or swap renderer
+ * and degrades gracefully when `<Activity>` is unavailable.
+ *
+ * @example
+ * const variant = useMediaVariant({ desktop: '(min-width:768px)', mobile: '(max-width:767px)' });
+ * return (
+ *   <Responsive
+ *     variant={variant}
+ *     variants={{
+ *       mobile: () => <MobileLayout value={value} onChange={setValue} />,
+ *       desktop: () => <DesktopLayout value={value} onChange={setValue} />,
+ *     }}
+ *   />
+ * );
+ */
+export function Responsive<K extends string>({
+  variant,
+  variants,
+  strategy = 'keepAlive',
+  mount = 'lazy',
+}: ResponsiveProps<K>): ReactNode {
+  const keepAlive = strategy === 'keepAlive' && isActivitySupported();
+
+  if (strategy === 'keepAlive' && !keepAlive) {
+    warnOnce(ACTIVITY_FALLBACK_WARNING);
+  }
+
+  return (
+    <SharedStateScope>
+      {keepAlive ? (
+        <KeepAliveVariants variant={variant} variants={variants} mount={mount} />
+      ) : (
+        <SwapVariant variant={variant} variants={variants} />
+      )}
+    </SharedStateScope>
+  );
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="config/createResponsive">
+import { createContext, useContext, type ReactElement } from 'react';
+import { Responsive as ControlledResponsive } from '../responsive/Responsive';
+import { useMediaVariant } from '../media/useMediaVariant';
+import { useResponsiveValue as baseUseResponsiveValue } from '../media/useResponsiveValue';
+import { Activity, isActivitySupported } from '../platform/activity';
+import { warnOnce } from '../internal/warnOnce';
+import { SharedStateScope } from '../shared/SharedStateScope';
+import type {
+  ConfiguredResponsive,
+  ConfiguredResponsiveProps,
+  CreateResponsiveOptions,
+  MatchProps,
+  ResponsiveProviderProps,
+  VariantMap,
+} from '../types';
+import { breakpointsToQueries } from '../query/breakpointsToQueries';
+
+const RESERVED = ['strategy', 'mount', 'ssr', 'settleMs', 'deferWhileComposing'];
+
+/** Gate keys are PascalCased so `const { Desktop } = Match` works without renaming. */
+const toGateName = (key: string): string => key.charAt(0).toUpperCase() + key.slice(1);
+
+const ACTIVITY_GATE_WARNING =
+  '[responsive-keepalive] <Activity> is unavailable; Match gates fall back to swap (inactive branches unmount and lose state). Upgrade to React 19.2+ for keep-alive.';
+
+/**
+ * Builds a `<Responsive>` plus a root `Provider` and composable `Match` gates,
+ * all bound to a breakpoint config kept in its own file. Variant keys are inferred
+ * from the config and type-checked.
+ *
+ * @example
+ * // responsive.ts
+ * export const { Provider, Match, useVariant } = createResponsive(
+ *   { mobile: 0, desktop: 760 },
+ *   { ssr: 'desktop' },
+ * );
+ * export const { Desktop, Mobile } = Match;
+ *
+ * // App.tsx root (or Next app/layout.tsx)
+ * <Provider>{children}</Provider>;
+ *
+ * // anywhere — composable like ordinary components, keep-alive + shared state
+ * <Desktop><DesktopDashboard /></Desktop>
+ * <Mobile><MobileDashboard /></Mobile>
+ */
+export function createResponsive<const K extends string>(
+  breakpoints: Record<K, number>,
+  defaults: CreateResponsiveOptions<NoInfer<K>> = {},
+): ConfiguredResponsive<K> {
+  for (const key of Object.keys(breakpoints)) {
+    if (RESERVED.includes(key)) {
+      throw new Error(
+        `[responsive-keepalive] createResponsive: breakpoint key "${key}" collides with a reserved prop (${RESERVED.join(', ')}).`,
+      );
+    }
+  }
+  const queries = breakpointsToQueries(breakpoints);
+
+  // Per-instance context: a Provider can override the SSR/initial variant for its subtree.
+  const SsrContext = createContext<K | undefined>(undefined);
+
+  function Provider({ children, ssr }: ResponsiveProviderProps<K>): ReactElement {
+    return (
+      <SsrContext.Provider value={ssr}>
+        <SharedStateScope>{children}</SharedStateScope>
+      </SsrContext.Provider>
+    );
+  }
+  Provider.displayName = 'ResponsiveProvider';
+
+  const useVariant = (options: CreateResponsiveOptions<K> = {}): K => {
+    const ssrOverride = useContext(SsrContext);
+    return useMediaVariant(queries, {
+      ssr: options.ssr ?? ssrOverride ?? defaults.ssr,
+      settleMs: options.settleMs ?? defaults.settleMs,
+      deferWhileComposing: options.deferWhileComposing ?? defaults.deferWhileComposing,
+    });
+  };
+
+  function Responsive(props: ConfiguredResponsiveProps<K>): ReactElement {
+    const { strategy, mount, ssr, settleMs, deferWhileComposing, ...variants } = props;
+    const variant = useVariant({ ssr, settleMs, deferWhileComposing });
+    return (
+      <ControlledResponsive
+        variant={variant}
+        variants={variants as unknown as VariantMap<K>}
+        strategy={strategy}
+        mount={mount}
+      />
+    );
+  }
+  Responsive.displayName = 'ConfiguredResponsive';
+
+  const makeGate = (key: K) => {
+    function Gate({ children, keepAlive = true }: MatchProps): ReactElement {
+      const active = useVariant() === key;
+      if (keepAlive) {
+        if (isActivitySupported()) {
+          return <Activity mode={active ? 'visible' : 'hidden'}>{children}</Activity>;
+        }
+        warnOnce(ACTIVITY_GATE_WARNING);
+      }
+      return <>{active ? children : null}</>;
+    }
+    Gate.displayName = `Match.${toGateName(key)}`;
+    return Gate;
+  };
+
+  const Match = Object.fromEntries(
+    (Object.keys(queries) as K[]).map((key) => [toGateName(key), makeGate(key)]),
+  ) as unknown as { [P in K as Capitalize<P>]: (props: MatchProps) => ReactElement };
+
+  const useResponsiveValue = <V,>(
+    values: Record<K, V>,
+    options: Omit<CreateResponsiveOptions<K>, 'deferWhileComposing'> = {},
+  ): V => {
+    const ssrOverride = useContext(SsrContext);
+    return baseUseResponsiveValue(queries, values, {
+      ssr: options.ssr ?? ssrOverride ?? defaults.ssr,
+      settleMs: options.settleMs ?? defaults.settleMs,
+    });
+  };
+
+  return { Responsive, Provider, Match, useVariant, useResponsiveValue, breakpoints: queries };
+}
+</script>
+<script type="text/plain" class="srcblob" data-id="index">
+export { Responsive } from './responsive/Responsive';
+export { useMediaVariant } from './media/useMediaVariant';
+export { useResponsiveValue } from './media/useResponsiveValue';
+export { useContainerVariant } from './container/useContainerVariant';
+export { createResponsive } from './config/createResponsive';
+export { useSharedState } from './shared/useSharedState';
+export type { SetSharedState } from './shared/useSharedState';
+export { SharedStateScope } from './shared/SharedStateScope';
+export type {
+  ResponsiveProps,
+  Strategy,
+  Mount,
+  VariantMap,
+  MediaVariantOptions,
+  ContainerVariantOptions,
+  ResponsiveValueOptions,
+  BreakpointConfig,
+  MediaInput,
+  CreateResponsiveOptions,
+  ConfiguredResponsiveProps,
+  ConfiguredResponsive,
+  ResponsiveProviderProps,
+  MatchProps,
+} from './types';
+</script>
+</div>
+
+    <script>
+      // ---------------------------------------------------------------- data
+      const KIND = {
+        pure: { c: '#9ece6a', label: 'pure fn' },
+        hook: { c: '#7aa2f7', label: 'React hook' },
+        component: { c: '#bb9af7', label: 'component' },
+        factory: { c: '#ff9e64', label: 'factory' },
+        type: { c: '#7dcfff', label: 'type' },
+        platform: { c: '#e0af68', label: 'platform boundary' },
+        internal: { c: '#9aa5ce', label: 'internal util' },
+        barrel: { c: '#f7768e', label: 'barrel' },
+      };
+
+      // id, dir, file, layer, kind, role
+      const N = [
+        // L0 leaves
+        ['types', '', 'types.ts', 0, 'type', 'All public type definitions (Strategy, Mount, VariantMap, MediaInput …)'],
+        ['query/breakpointsToQueries', 'query/', 'breakpointsToQueries.ts', 0, 'pure', 'integer px → non-overlapping mobile-first query map (validation · sort)'],
+        ['media/createMediaQueryStore', 'media/', 'createMediaQueryStore.ts', 0, 'pure', 'query → variant store factory (matchMedia, React-agnostic)'],
+        ['policies/useSettledValue', 'policies/', 'useSettledValue.ts', 0, 'hook', 'anti-thrash: commit only when value is stable for settleMs'],
+        ['policies/useHeldWhileComposing', 'policies/', 'useHeldWhileComposing.ts', 0, 'hook', 'hold switch during IME composition, apply on compositionend'],
+        ['responsive/renderVariant', 'responsive/', 'renderVariant.ts', 0, 'pure', 'node | (()=>node) → normalize to node'],
+        ['responsive/resolveMountedKeys', 'responsive/', 'resolveMountedKeys.ts', 0, 'pure', 'decide which keys to mount (lazy = activated, eager = all)'],
+        ['container/resolveContainerVariant', 'container/', 'resolveContainerVariant.ts', 0, 'pure', 'width + min-width map → variant (floor guaranteed)'],
+        ['container/useElementWidth', 'container/', 'useElementWidth.ts', 0, 'hook', 'track content-box width via ResizeObserver (null before first measurement)'],
+        ['shared/createSharedStore', 'shared/', 'createSharedStore.ts', 0, 'pure', 'key-based value store + per-key subscriptions (React-agnostic)'],
+        ['platform/activity', 'platform/', 'activity.ts', 0, 'platform', 'React.Activity DIP boundary + support detection'],
+        ['internal/warnOnce', 'internal/', 'warnOnce.ts', 0, 'internal', 'console.warn once per message (dedup)'],
+        // L1
+        ['query/normalizeQueries', 'query/', 'normalizeQueries.ts', 1, 'pure', 'integer/string branch → query map (mix rejected at runtime)'],
+        ['media/useMatchedVariant', 'media/', 'useMatchedVariant.ts', 1, 'hook', 'raw matched variant (useSyncExternalStore, store cached)'],
+        ['shared/SharedStateScope', 'shared/', 'SharedStateScope.tsx', 1, 'component', 'create one store, provide via context (SSR-safe, ref)'],
+        ['responsive/SwapVariant', 'responsive/', 'SwapVariant.tsx', 1, 'component', 'render active variant only; key → clean unmount/mount'],
+        ['responsive/KeepAliveVariants', 'responsive/', 'KeepAliveVariants.tsx', 1, 'component', 'keep inactive variants via <Activity>; manage mount ledger'],
+        // L2
+        ['media/useMediaVariant', 'media/', 'useMediaVariant.ts', 2, 'hook', 'viewport → variant: normalize → match → settle → IME'],
+        ['media/useResponsiveValue', 'media/', 'useResponsiveValue.ts', 2, 'hook', 'viewport → value: normalize → match → settle'],
+        ['container/useContainerVariant', 'container/', 'useContainerVariant.ts', 2, 'hook', 'container width → variant: measure → resolve → settle'],
+        ['shared/useSharedState', 'shared/', 'useSharedState.ts', 2, 'hook', 'key-based shared state within a scope (useState shape)'],
+        ['responsive/Responsive', 'responsive/', 'Responsive.tsx', 2, 'component', 'dispatcher: select keepAlive/swap + auto-provide scope'],
+        // L3
+        ['config/createResponsive', 'config/', 'createResponsive.tsx', 3, 'factory', 'single config → create Responsive/Provider/Match/hooks'],
+        // L4
+        ['index', '', 'index.ts', 4, 'barrel', 'public barrel — re-export values & types'],
+      ];
+
+      // edges: [from, to, kind]  kind: 'val' | 'type' | 'reexport'
+      const E = [
+        ['config/createResponsive', 'responsive/Responsive', 'val'],
+        ['config/createResponsive', 'media/useMediaVariant', 'val'],
+        ['config/createResponsive', 'media/useResponsiveValue', 'val'],
+        ['config/createResponsive', 'platform/activity', 'val'],
+        ['config/createResponsive', 'internal/warnOnce', 'val'],
+        ['config/createResponsive', 'shared/SharedStateScope', 'val'],
+        ['config/createResponsive', 'query/breakpointsToQueries', 'val'],
+        ['config/createResponsive', 'types', 'type'],
+        ['container/useContainerVariant', 'policies/useSettledValue', 'val'],
+        ['container/useContainerVariant', 'container/resolveContainerVariant', 'val'],
+        ['container/useContainerVariant', 'container/useElementWidth', 'val'],
+        ['container/useContainerVariant', 'types', 'type'],
+        ['media/useMatchedVariant', 'media/createMediaQueryStore', 'val'],
+        ['media/useMediaVariant', 'policies/useHeldWhileComposing', 'val'],
+        ['media/useMediaVariant', 'policies/useSettledValue', 'val'],
+        ['media/useMediaVariant', 'query/normalizeQueries', 'val'],
+        ['media/useMediaVariant', 'media/useMatchedVariant', 'val'],
+        ['media/useMediaVariant', 'types', 'type'],
+        ['media/useResponsiveValue', 'policies/useSettledValue', 'val'],
+        ['media/useResponsiveValue', 'query/normalizeQueries', 'val'],
+        ['media/useResponsiveValue', 'media/useMatchedVariant', 'val'],
+        ['media/useResponsiveValue', 'types', 'type'],
+        ['query/normalizeQueries', 'query/breakpointsToQueries', 'val'],
+        ['query/normalizeQueries', 'types', 'type'],
+        ['responsive/KeepAliveVariants', 'platform/activity', 'val'],
+        ['responsive/KeepAliveVariants', 'responsive/renderVariant', 'val'],
+        ['responsive/KeepAliveVariants', 'responsive/resolveMountedKeys', 'val'],
+        ['responsive/KeepAliveVariants', 'types', 'type'],
+        ['responsive/Responsive', 'platform/activity', 'val'],
+        ['responsive/Responsive', 'internal/warnOnce', 'val'],
+        ['responsive/Responsive', 'shared/SharedStateScope', 'val'],
+        ['responsive/Responsive', 'responsive/KeepAliveVariants', 'val'],
+        ['responsive/Responsive', 'responsive/SwapVariant', 'val'],
+        ['responsive/Responsive', 'types', 'type'],
+        ['responsive/SwapVariant', 'responsive/renderVariant', 'val'],
+        ['responsive/SwapVariant', 'types', 'type'],
+        ['responsive/resolveMountedKeys', 'types', 'type'],
+        ['shared/SharedStateScope', 'shared/createSharedStore', 'val'],
+        ['shared/useSharedState', 'shared/SharedStateScope', 'val'],
+        ['index', 'responsive/Responsive', 'reexport'],
+        ['index', 'media/useMediaVariant', 'reexport'],
+        ['index', 'media/useResponsiveValue', 'reexport'],
+        ['index', 'container/useContainerVariant', 'reexport'],
+        ['index', 'config/createResponsive', 'reexport'],
+        ['index', 'shared/useSharedState', 'reexport'],
+        ['index', 'shared/SharedStateScope', 'reexport'],
+        ['index', 'types', 'type'],
+      ];
+
+      const byId = Object.fromEntries(N.map((n) => [n[0], { id: n[0], dir: n[1], file: n[2], layer: n[3], kind: n[4], role: n[5] }]));
+      const outOf = {}, inTo = {};
+      N.forEach((n) => { outOf[n[0]] = []; inTo[n[0]] = []; });
+      E.forEach(([f, t, k]) => { outOf[f].push([t, k]); inTo[t].push([f, k]); });
+
+      // ---------------------------------------------------------------- layers section
+      const layerMeta = [
+        ['L0', 'Leaf · Pure / Platform'],
+        ['L1', 'Small compositions'],
+        ['L2', 'Public hooks & components'],
+        ['L3', 'Factory'],
+        ['L4', 'Barrel'],
+      ];
+      const layersEl = document.getElementById('layers');
+      layerMeta.forEach((lm, li) => {
+        const files = N.filter((n) => n[3] === li);
+        const row = document.createElement('div');
+        row.className = 'layer';
+        row.innerHTML =
+          `<div class="layer-tag"><span class="ln">${lm[0]}</span><span class="lt">${lm[1]}</span></div>` +
+          `<div class="layer-files">` +
+          files
+            .map(
+              (f) =>
+                `<span class="fchip" data-go="${f[0]}"><span class="dir">${f[1]}</span>${f[2]}</span>`,
+            )
+            .join('') +
+          `</div>`;
+        layersEl.appendChild(row);
+      });
+
+      // ---------------------------------------------------------------- graph layout
+      const SVG = document.getElementById('svg');
+      const SVGNS = 'http://www.w3.org/2000/svg';
+      const NW = 188, NH = 42, VGAP = 15, COLX = 252, PADX = 12, PADY = 16;
+      // explicit vertical order per layer (folder-grouped to reduce crossings)
+      const order = {
+        0: ['query/breakpointsToQueries', 'media/createMediaQueryStore', 'policies/useSettledValue',
+            'policies/useHeldWhileComposing', 'responsive/renderVariant', 'responsive/resolveMountedKeys',
+            'container/resolveContainerVariant', 'container/useElementWidth', 'shared/createSharedStore',
+            'platform/activity', 'internal/warnOnce', 'types'],
+        1: ['query/normalizeQueries', 'media/useMatchedVariant', 'responsive/SwapVariant',
+            'responsive/KeepAliveVariants', 'shared/SharedStateScope'],
+        2: ['media/useMediaVariant', 'media/useResponsiveValue', 'container/useContainerVariant',
+            'responsive/Responsive', 'shared/useSharedState'],
+        3: ['config/createResponsive'],
+        4: ['index'],
+      };
+      const cols = [0, 1, 2, 3, 4];
+      const maxCount = Math.max(...cols.map((c) => order[c].length));
+      const totalH = maxCount * (NH + VGAP) - VGAP + PADY * 2;
+      const totalW = PADX * 2 + 4 * COLX + NW;
+      SVG.setAttribute('viewBox', `0 0 ${totalW} ${totalH}`);
+      SVG.setAttribute('width', totalW);
+      SVG.setAttribute('height', totalH);
+
+      const pos = {};
+      cols.forEach((c) => {
+        const list = order[c];
+        const colH = list.length * (NH + VGAP) - VGAP;
+        const y0 = (totalH - colH) / 2;
+        list.forEach((id, i) => {
+          pos[id] = { x: PADX + c * COLX, y: y0 + i * (NH + VGAP) };
+        });
+      });
+
+      // edges first (under nodes)
+      const edgeEls = [];
+      E.forEach(([f, t, k]) => {
+        const s = pos[f], d = pos[t];
+        if (!s || !d) return;
+        const sx = s.x, sy = s.y + NH / 2; // importer left-center
+        const tx = d.x + NW, ty = d.y + NH / 2; // imported right-center
+        const path = document.createElementNS(SVGNS, 'path');
+        const dx = Math.max(40, (sx - tx) / 2);
+        path.setAttribute('d', `M ${sx} ${sy} C ${sx - dx} ${sy}, ${tx + dx} ${ty}, ${tx} ${ty}`);
+        path.setAttribute('class', 'edge' + (k === 'type' ? ' type' : '') + (k === 'reexport' ? ' reexport' : ''));
+        path.dataset.f = f;
+        path.dataset.t = t;
+        SVG.appendChild(path);
+        edgeEls.push(path);
+      });
+
+      // nodes
+      const nodeEls = {};
+      N.forEach((n) => {
+        const p = pos[n[0]];
+        const g = document.createElementNS(SVGNS, 'g');
+        g.setAttribute('class', 'node');
+        g.setAttribute('transform', `translate(${p.x},${p.y})`);
+        g.dataset.id = n[0];
+        const col = KIND[n[4]].c;
+        const rect = document.createElementNS(SVGNS, 'rect');
+        rect.setAttribute('width', NW);
+        rect.setAttribute('height', NH);
+        rect.setAttribute('rx', 8);
+        rect.setAttribute('fill', '#1f2335');
+        rect.setAttribute('stroke', col);
+        rect.setAttribute('stroke-width', 1.4);
+        g.appendChild(rect);
+        const bar = document.createElementNS(SVGNS, 'rect');
+        bar.setAttribute('width', 4);
+        bar.setAttribute('height', NH);
+        bar.setAttribute('fill', col);
+        g.appendChild(bar);
+        const t1 = document.createElementNS(SVGNS, 'text');
+        t1.setAttribute('x', 12);
+        t1.setAttribute('y', 17);
+        t1.setAttribute('font-size', 11.5);
+        t1.textContent = (n[1] ? n[1] : '') + n[2];
+        g.appendChild(t1);
+        const t2 = document.createElementNS(SVGNS, 'text');
+        t2.setAttribute('x', 12);
+        t2.setAttribute('y', 31);
+        t2.setAttribute('font-size', 9.5);
+        t2.setAttribute('class', 'role');
+        t2.textContent = KIND[n[4]].label;
+        g.appendChild(t2);
+        g.addEventListener('click', () => select(n[0]));
+        SVG.appendChild(g);
+        nodeEls[n[0]] = g;
+      });
+
+      // ---------------------------------------------------------------- select
+      const detail = document.getElementById('detail');
+      let selected = null;
+      function chip(id) {
+        const m = byId[id];
+        return `<span class="fref" data-go="${id}"><span class="dir">${m.dir}</span>${m.file}</span>`;
+      }
+      function select(id) {
+        selected = id;
+        const hot = new Set([id]);
+        outOf[id].forEach(([t]) => hot.add(t));
+        inTo[id].forEach(([f]) => hot.add(f));
+        Object.entries(nodeEls).forEach(([nid, g]) => {
+          g.classList.toggle('dim', !hot.has(nid));
+        });
+        edgeEls.forEach((p) => {
+          const f = p.dataset.f, t = p.dataset.t;
+          p.classList.remove('hot', 'up', 'dim');
+          if (f === id) p.classList.add('hot'); // imports (this → leaf)
+          else if (t === id) p.classList.add('hot', 'up'); // importers (other → this)
+          else p.classList.add('dim');
+        });
+        const m = byId[id];
+        const imps = outOf[id];
+        const impBy = inTo[id];
+        detail.innerHTML =
+          `<div class="dt-file">${m.dir}${m.file}</div>` +
+          `<span class="dt-kind" style="background:${KIND[m.kind].c}22;color:${KIND[m.kind].c}">${KIND[m.kind].label} · L${m.layer}</span>` +
+          `<div class="dt-role">${m.role}</div>` +
+          `<h4>imports → (${imps.length})</h4>` +
+          (imps.length
+            ? `<div class="chips">${imps.map(([t, k]) => chip(t) + (k === 'type' ? '<span style="color:var(--muted);font-size:10px">·type</span>' : '')).join('')}</div>`
+            : `<div class="empty">none — leaf module</div>`) +
+          `<h4>imported by ← (${impBy.length})</h4>` +
+          (impBy.length
+            ? `<div class="chips">${impBy.map(([f]) => chip(f)).join('')}</div>`
+            : `<div class="empty">none — top-level (re-exported from barrel only)</div>`) +
+          `<button class="fc-btn" data-src="${id}" style="margin-top:16px">📄 View source ↓</button>`;
+      }
+
+      // ---------------------------------------------------------------- legend
+      const legend = document.getElementById('legend');
+      Object.entries(KIND).forEach(([, v]) => {
+        const s = document.createElement('span');
+        s.innerHTML = `<span class="dot" style="background:${v.c}"></span>${v.label}`;
+        legend.appendChild(s);
+      });
+
+      // ---------------------------------------------------------------- highlighter
+      const KW = new Set(['const','let','var','return','function','export','import','from','type','new','typeof','of','in','default','interface','extends','as','await','async']);
+      function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+      function hl(src){
+        const out=[]; let i=0; const n=src.length;
+        const push=(cls,txt)=>out.push(cls?`<span class="${cls}">${esc(txt)}</span>`:esc(txt));
+        while(i<n){
+          const c=src[i];
+          if(c==='/'&&src[i+1]==='*'){let j=i+2;while(j<n&&!(src[j]==='*'&&src[j+1]==='/'))j++;j=Math.min(j+2,n);push('c',src.slice(i,j));i=j;continue;}
+          if(c==='/'&&src[i+1]==='/'){let j=i;while(j<n&&src[j]!=='\n')j++;push('c',src.slice(i,j));i=j;continue;}
+          if(c==='\''||c==='"'||c==='`'){const q=c;let j=i+1;while(j<n&&src[j]!==q){if(src[j]==='\\')j++;j++;}j=Math.min(j+1,n);push('s',src.slice(i,j));i=j;continue;}
+          if(/[A-Za-z_$]/.test(c)){let j=i;while(j<n&&/[A-Za-z0-9_$]/.test(src[j]))j++;const w=src.slice(i,j);
+            if(KW.has(w))push('k',w); else if(/^[A-Z]/.test(w)||/^(use|create)[A-Z]/.test(w))push('t',w); else push('',w); i=j;continue;}
+          if(/[0-9]/.test(c)){let j=i;while(j<n&&/[0-9.]/.test(src[j]))j++;push('num',src.slice(i,j));i=j;continue;}
+          push('',c); i++;
+        }
+        return out.join('');
+      }
+
+      // ---------------------------------------------------------------- API data
+      const APIS = [
+        {
+          id: 'Responsive', kind: 'component', kc: '#bb9af7',
+          sig: 'function Responsive<K>(props: ResponsiveProps<K>): ReactNode',
+          blurb: 'Low-level primitive. Pass the active variant and variants map directly; the library handles keep-alive/swap and lazy/eager mounting. The variant can come from anywhere (hook, feature flag, SSR header).',
+          code:
+`import { Responsive } from 'responsive-keepalive';
+
+// variant is caller-controlled — typically from useMediaVariant
+const variant = useMediaVariant({ mobile: 0, desktop: 768 }, { ssr: 'mobile' });
+
+<Responsive
+  variant={variant}
+  variants={{
+    mobile: () => <MobileLayout />,   // ()=>node: defer creation until mount
+    desktop: () => <DesktopLayout />,
+  }}
+  strategy="keepAlive"  // default — keep inactive branches alive
+  mount="lazy"          // default — mount on first activation
+/>;`,
+          steps: [
+            { f: ['responsive/Responsive'], t: 'Computes whether keepAlive is possible from <b>strategy</b> and <b>isActivitySupported()</b>. If keepAlive was requested but Activity is unavailable, warns once and falls back to swap.', xf: ['platform/activity', 'internal/warnOnce'] },
+            { f: ['shared/SharedStateScope'], t: 'Wraps children in a <b>shared scope</b> — so descendant useSharedState works without extra setup.', xf: ['shared/createSharedStore'] },
+            { f: ['responsive/KeepAliveVariants'], t: '(keepAlive) Records activated keys → <b>resolveMountedKeys</b> decides which to mount (lazy = activated, eager = all) → wraps each in <b>&lt;Activity visible|hidden&gt;</b> and normalises via <b>renderVariant</b>.', xf: ['responsive/resolveMountedKeys', 'platform/activity', 'responsive/renderVariant'] },
+            { f: ['responsive/SwapVariant'], t: '(swap) Renders only the active variant via <b>&lt;Fragment key={variant}&gt;</b> → clean unmount/mount on switch (state lost). Normalised via renderVariant.', xf: ['responsive/renderVariant'] },
+            { out: true, t: 'Active tree is visible; inactive trees are kept alive and hidden (or unmounted in swap mode).' },
+          ],
+          note: 'The key to keep-alive is fixing the tree position with a <b>stable React key</b> (KeepAliveVariants maps to variant keys), which preserves state.',
+        },
+        {
+          id: 'useMediaVariant', kind: 'hook', kc: '#7aa2f7',
+          sig: 'useMediaVariant<K>(breakpoints: MediaInput<K>, options?): K',
+          blurb: 'Resolves a variant key from the viewport. Accepts integer px breakpoints (recommended) or raw media-query strings (for non-width conditions like orientation).',
+          code:
+`import { useMediaVariant } from 'responsive-keepalive';
+
+// integer breakpoints — converted to mobile-first bands internally
+const variant = useMediaVariant(
+  { mobile: 0, desktop: 768 },
+  { ssr: 'mobile', settleMs: 150, deferWhileComposing: true },
+);
+
+// non-width conditions use raw query strings (escape hatch)
+const mode = useMediaVariant({
+  light: '(prefers-color-scheme: light)',
+  dark: '(prefers-color-scheme: dark)',
+});`,
+          steps: [
+            { f: ['query/normalizeQueries'], t: 'Normalise input — integers → <b>breakpointsToQueries</b> generates non-overlapping bands; strings → pass through; mix → throw.', xf: ['query/breakpointsToQueries'] },
+            { f: ['media/useMatchedVariant'], t: 'Cache the store by query map key (JSON.stringify + fallback) → <b>createMediaQueryStore</b> subscribes to matchMedia; returns first matching key (or fallback) via <b>useSyncExternalStore</b> — this is the <b>raw</b> value.', xf: ['media/createMediaQueryStore'] },
+            { f: ['policies/useSettledValue'], t: 'anti-thrash — commit a raw change only after it has been stable for settleMs (suppress boundary jitter).' },
+            { f: ['policies/useHeldWhileComposing'], t: 'IME policy (outermost) — hold the switch during composition, apply on compositionend.' },
+            { out: true, t: 'Variant key K. Policies are applied downstream of the store; <b>outermost wins</b> (IME hold beats settle).' },
+          ],
+          note: 'The store always emits <b>raw</b> matches only. settleMs and deferWhileComposing are <b>per-hook policies</b>, not part of the store — multiple consumers can use different policies on the same shared store.',
+        },
+        {
+          id: 'useResponsiveValue', kind: 'hook', kc: '#7aa2f7',
+          sig: 'useResponsiveValue<K, V>(breakpoints: MediaInput<K>, values: Record<K,V>, options?): V',
+          blurb: 'Picks a single <b>value</b> per breakpoint — column count, gap, label — when a full component tree is not needed. The scalar sibling of &lt;Responsive&gt;.',
+          code:
+`import { useResponsiveValue } from 'responsive-keepalive';
+
+const columns = useResponsiveValue(
+  { mobile: 0, tablet: 600, desktop: 1024 },
+  { mobile: 1, tablet: 2, desktop: 3 },
+  { ssr: 'mobile' },
+);
+// columns: number — value only, no tree`,
+          steps: [
+            { f: ['query/normalizeQueries'], t: 'Integer/string normalisation (same path as useMediaVariant).', xf: ['query/breakpointsToQueries'] },
+            { f: ['media/useMatchedVariant'], t: 'Subscribe to the matched variant key via useSyncExternalStore.', xf: ['media/createMediaQueryStore'] },
+            { f: ['policies/useSettledValue'], t: 'Stabilise the variant with anti-thrash.' },
+            { out: true, t: 'Returns <b>values[variant]</b>. (Value selection — IME hold is not needed here.)' },
+          ],
+          note: 'Uses the same matching pipeline as useMediaVariant, but at the end picks a value from the <b>values map</b> instead of rendering a tree.',
+        },
+        {
+          id: 'useContainerVariant', kind: 'hook', kc: '#7aa2f7',
+          sig: 'useContainerVariant<K, E>(ref, breakpoints: Record<K,number>, options?): K',
+          blurb: 'Picks a variant from the <b>element\'s own width</b> (ResizeObserver) rather than the viewport. Useful when the same card should be "row" in a wide column and "stack" in a narrow one.',
+          code:
+`import { useRef } from 'react';
+import { useContainerVariant } from 'responsive-keepalive';
+
+const ref = useRef<HTMLDivElement>(null);
+const variant = useContainerVariant(
+  ref,
+  { stack: 0, row: 420, wide: 680 }, // variant → minimum content width (px)
+  { ssr: 'stack' },
+);
+
+return <div ref={ref}>{/* branch on variant */}</div>;`,
+          steps: [
+            { f: ['container/resolveContainerVariant'], t: 'Compute fallback — if no ssr, use the variant at width 0 (= floor). Rule: largest threshold ≤ width wins; always selects one.' },
+            { f: ['container/useElementWidth'], t: 'Track the ref element\'s content-box width via <b>ResizeObserver</b>. Returns null before the first measurement and on the server.' },
+            { f: ['container/resolveContainerVariant'], t: 'Recalculate variant from measured width (keeps fallback when width === null).' },
+            { f: ['policies/useSettledValue'], t: 'anti-thrash to suppress flicker from width jitter.' },
+            { out: true, t: 'Variant key K. Sourced from <b>element width, not matchMedia</b> — does not go through the media store pipeline.' },
+          ],
+          note: 'Shares the anti-thrash policy (useSettledValue) with the viewport hooks, but the match source is different — container uses <b>ResizeObserver + pure resolveContainerVariant</b>.',
+        },
+        {
+          id: 'createResponsive', kind: 'factory', kc: '#ff9e64',
+          sig: 'createResponsive<K>(breakpoints: Record<K,number>, defaults?): ConfiguredResponsive<K>',
+          blurb: 'Put breakpoint configuration in one file, then generate the bound &lt;Responsive&gt;, Provider, Match gates, and hooks in one call. Variant keys are inferred and type-checked.',
+          code:
+`// responsive.ts
+import { createResponsive } from 'responsive-keepalive';
+
+export const { Responsive, Provider, Match, useVariant, useResponsiveValue } =
+  createResponsive({ mobile: 0, desktop: 768 }, { ssr: 'mobile' });
+export const { Mobile, Desktop } = Match;
+
+// usage
+<Provider>
+  <Responsive mobile={() => <M />} desktop={() => <D />} />
+  <Desktop><DesktopNav /></Desktop>   // composable gate
+</Provider>;`,
+          steps: [
+            { f: ['config/createResponsive'], t: 'Check for reserved prop key collisions (strategy/mount/ssr/settleMs/deferWhileComposing) → throw on conflict.' },
+            { f: ['query/breakpointsToQueries'], t: 'Convert integer breakpoints → query map <b>once</b> and bind to all generated output.' },
+            { f: ['shared/SharedStateScope'], t: '<b>Provider</b> wraps children in an SSR override context + SharedStateScope (scope auto-provided).', xf: ['shared/createSharedStore'] },
+            { f: ['media/useMediaVariant', 'media/useResponsiveValue'], t: '<b>useVariant / useResponsiveValue</b> delegate to low-level hooks with the bound query map (policy merge: options → Provider ssr → defaults).' },
+            { f: ['responsive/Responsive'], t: '<b>Responsive</b> (named props) splits reserved props, resolves variant via useVariant, and delegates to the controlled &lt;Responsive&gt;. <b>Match</b> gates show/hide via useVariant() === key with &lt;Activity&gt;.', xf: ['platform/activity', 'internal/warnOnce'] },
+            { out: true, t: 'A type-safe primitive bundle bound to the config. Missing or misspelled keys are compile errors.' },
+          ],
+          note: 'The factory does not introduce new mechanisms — it is <b>an assembly of low-level APIs</b>. All output ultimately flows through the useMediaVariant/Responsive/SharedStateScope pipelines.',
+        },
+        {
+          id: 'useSharedState', kind: 'hook', kc: '#7aa2f7',
+          sig: 'useSharedState<T>(key: string, initialValue: T): [T, SetSharedState<T>]',
+          blurb: 'Lets sibling components share state by key without lifting it to a parent. The store lives in a stable ancestor so values survive swaps and remounts.',
+          code:
+`import { useSharedState } from 'responsive-keepalive';
+
+function SearchField() {
+  // same key and initial value at every call site
+  const [query, setQuery] = useSharedState('search', '');
+  return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
+}
+// Use inside <Responsive>, factory <Provider>, or <SharedStateScope>`,
+          steps: [
+            { f: ['shared/useSharedState', 'shared/SharedStateScope'], t: 'Read the scope store from context — <b>throws</b> if no scope exists (clear error).' },
+            { f: ['shared/createSharedStore'], t: 'Connect per-key subscribe/getSnapshot to <b>useSyncExternalStore</b>. Falls back to initialValue if no value exists yet.' },
+            { f: ['shared/createSharedStore'], t: 'setValue → store.set(key) → notifies all subscribers of that key.' },
+            { out: true, t: '[value, setValue]. Siblings in the same scope synchronise; the store in a stable ancestor means <b>values survive swap and remount</b>.' },
+          ],
+          note: '<b>Provider</b> and <b>&lt;Responsive&gt;</b> automatically mount a SharedStateScope internally. You only need to use SharedStateScope directly when sharing state between siblings that are outside both.',
+        },
+        {
+          id: 'SharedStateScope', kind: 'component', kc: '#bb9af7',
+          sig: 'function SharedStateScope({ children }): ReactElement',
+          blurb: 'Creates one store and provides it to the subtree for useSharedState to synchronise on. Use directly when binding siblings outside a &lt;Responsive&gt; or Provider.',
+          code:
+`import { SharedStateScope, useSharedState } from 'responsive-keepalive';
+
+<SharedStateScope>
+  <SearchField />   {/* both share the 'search' key */}
+  <SearchField />   {/* via the same store */}
+</SharedStateScope>;`,
+          steps: [
+            { f: ['shared/SharedStateScope'], t: 'Creates the store <b>once</b> in a ref (not recreated on every render → SSR-safe, no cross-request leaks).', xf: ['shared/createSharedStore'] },
+            { f: ['shared/createSharedStore'], t: 'Exposes the created store to descendants via <b>SharedStateContext.Provider</b>.' },
+            { out: true, t: 'children receive the shared store via context. &lt;Responsive&gt; and the factory Provider already auto-mount this internally.' },
+          ],
+          note: 'One scope = one store. Siblings in the same scope synchronise; siblings in separate scopes are isolated even if they use the same key.',
+        },
+      ];
+
+      // render API cards
+      const apisEl = document.getElementById('apis');
+      APIS.forEach((a) => {
+        const card = document.createElement('div');
+        card.className = 'api';
+        card.id = 'api-' + a.id;
+        const stepsHtml = a.steps
+          .map((s, i) => {
+            const files = (s.f || []).map((f) => chip(f));
+            const xf = (s.xf || []).map((f) => chip(f));
+            const allChips = files.concat(xf).join('');
+            return (
+              `<div class="step${s.out ? ' out' : ''}">` +
+              `<span class="num">${s.out ? '✓' : i + 1}</span>` +
+              (allChips ? `<div class="files">${allChips}</div>` : '') +
+              `<div class="stext">${s.t}</div>` +
+              `</div>`
+            );
+          })
+          .join('');
+        card.innerHTML =
+          `<div class="api-head">` +
+          `<span class="api-name">${a.id}</span>` +
+          `<span class="api-kind" style="background:${a.kc}">${KIND[a.kind].label}</span>` +
+          `<div class="api-sig">${esc(a.sig)}</div>` +
+          `<div class="api-blurb">${a.blurb}</div>` +
+          `</div>` +
+          `<div class="api-body">` +
+          `<div class="api-col code"><div class="col-label">Consumer code</div><pre class="code">${hl(a.code)}</pre></div>` +
+          `<div class="api-col"><div class="col-label">Data pipeline (files touched)</div><div class="pipe">${stepsHtml}</div></div>` +
+          `</div>` +
+          (a.note ? `<div class="api-note">${a.note}</div>` : '');
+        apisEl.appendChild(card);
+      });
+
+      // ---------------------------------------------------------------- "go to node" wiring
+      document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-go]');
+        if (!el) return;
+        const id = el.dataset.go;
+        if (!byId[id]) return;
+        document.getElementById('graph').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        setTimeout(() => {
+          select(id);
+          const g = nodeEls[id];
+          if (g) {
+            g.classList.add('flash');
+            setTimeout(() => g.classList.remove('flash'), 1200);
+          }
+        }, 320);
+      });
+
+      // ------------------------------------------------------------ per-file detail
+      const FILE_ROLES = {
+"types": "Single source of truth for all public types. Defines the Strategy\u00b7Mount literal unions, VariantMap, per-option interfaces (MediaVariantOptions\u2026), integer-input types BreakpointConfig\u00b7MediaInput, and the factory return type ConfiguredResponsive. No runtime code; almost every module depends on these types.",
+"query/breakpointsToQueries": "Pure function that converts integer px threshold maps into non-overlapping, mobile-first media-query maps. Rejects empty objects, negatives, and non-integers at runtime, and sorts ascending so the floor key (lowest threshold) comes first. Structurally prevents typos and overlapping ranges in hand-written queries. Shared by createResponsive and the low-level hooks (via normalizeQueries).",
+"media/createMediaQueryStore": "React-agnostic store factory. Creates a useSyncExternalStore-compatible store (subscribe\u00b7getSnapshot\u00b7getServerSnapshot) from a query map. First matching query in object order wins; falls back to fallback. Always returns fallback on the server. Separating matchMedia logic from React makes it independently unit-testable.",
+"policies/useSettledValue": "General-purpose anti-thrash hook. When settleMs \u003e 0, commits a value change only after it has been stable for that duration; rapid back-and-forth resets the timer, preventing transient values from surfacing. A generic primitive \u2014 independent of media/container concerns \u2014 reused by multiple hooks.",
+"policies/useHeldWhileComposing": "Generic hook that holds an upstream value change during an active IME composition (Hangul/CJK), detected document-wide via compositionstart/compositionend, and applies the latest value on compositionend. When enabled=false, it is a complete no-op with no listeners attached.",
+"responsive/renderVariant": "Pure function that normalises a variant value \u2014 whether a node (\u003cLayout /\u003e) or a function (() =\u003e \u003cLayout /\u003e) \u2014 into a node at render time. The function form defers node creation until mount, which is beneficial for heavy trees.",
+"responsive/resolveMountedKeys": "Pure function that decides which variant keys to mount. Returns all keys for eager, or only those that have been activated at least once (in original order) for lazy. Separates the \u2018which keys to mount\u2019 decision from KeepAliveVariants, keeping it testable.",
+"container/resolveContainerVariant": "Pure function that picks a variant from a measured width and a variant\u2192min-width map, choosing the largest threshold not exceeded by the width. The floor always wins when the width is below all thresholds, guaranteeing a result. Throws on an empty map.",
+"container/useElementWidth": "Hook that tracks a ref element\u2019s content-box width via ResizeObserver. Returns null before the first measurement, on the server, and when ResizeObserver is unavailable; disconnects the observer on unmount.",
+"shared/createSharedStore": "React-agnostic store with per-key values and per-key subscriptions. Notifies only the subscribers of the changed key on set, and cleans up a key\u2019s entry when the last subscriber unsubscribes. SharedStateScope instantiates this store.",
+"platform/activity": "DIP (dependency-inversion) boundary for React.Activity. All other code imports from this module rather than directly from react, centralising the platform-specific detail and making it easy to mock in tests. Uses namespace access so it falls to undefined without throwing on React \u003c 19.2; exposes isActivitySupported for callers to check availability.",
+"internal/warnOnce": "Dedup utility that calls console.warn at most once per message (resetWarnings is for tests). Prevents the Activity fallback warning from flooding the console on every render.",
+"query/normalizeQueries": "Normalises low-level hook input into a query map. All numbers \u2192 breakpointsToQueries; all strings \u2192 pass through (same reference); mix \u2192 throw. Branches the integer convenience and string escape hatch in one function.",
+"media/useMatchedVariant": "Observation primitive that wraps createMediaQueryStore in useSyncExternalStore. Returns raw matching only \u2014 no policies. Caches the store by a JSON.stringify(queries)+fallback key so that passing a new query object on every render does not break subscribe stability.",
+"shared/SharedStateScope": "Component that creates one store and provides it via context to the subtree. Creates the store once in a ref to be SSR-safe (no re-creation on each render, no cross-request leaks). \u003cResponsive\u003e and the factory Provider auto-mount this.",
+"responsive/SwapVariant": "Component that renders only the active variant. Uses \u003cFragment key={variant}\u003e to change the key on switch \u2192 clean unmount/mount (state not preserved \u2014 a true swap). The code path when Activity is not needed or not supported.",
+"responsive/KeepAliveVariants": "Component that wraps mounted variants in \u003cActivity\u003e to keep inactive ones alive (state preserved). Manages the lazy mount ledger (a Set of activated keys) directly; delegates the \u2018which keys\u2019 decision to the pure resolveMountedKeys. Rendered only when Activity is available.",
+"media/useMediaVariant": "The public viewport\u2192variant hook. A thin composition of normalizeQueries \u2192 useMatchedVariant (raw) \u2192 useSettledValue (anti-thrash) \u2192 useHeldWhileComposing (IME). Outermost policy wins. Accepts both integer breakpoints and raw query strings.",
+"media/useResponsiveValue": "The public viewport\u2192value hook. Uses the same matching and settle pipeline as useMediaVariant, but returns values[variant] at the end. Use this when you need scalars (column count, gap, label) rather than a full component tree.",
+"container/useContainerVariant": "The public container-width\u2192variant hook. Composition of useElementWidth (measurement) + resolveContainerVariant (pure matching) + useSettledValue (anti-thrash). Returns ssr or the floor variant before measurement.",
+"shared/useSharedState": "useState-shaped hook that reads shared state keyed by a string within a scope store. Throws if no scope is present. Multiple call sites with the same key and initial value synchronise; the store lives in a stable ancestor so values survive swap and remount.",
+"responsive/Responsive": "The public dispatcher. Selects KeepAliveVariants or SwapVariant based on strategy and Activity support; wraps children in SharedStateScope to auto-provide shared state. If keepAlive is requested but Activity is unavailable, warns once and falls back to swap.",
+"config/createResponsive": "Factory that generates a bound Responsive, Provider, Match, useVariant, and useResponsiveValue from a single config. Checks for reserved-prop key collisions, converts breakpoints to queries once (bound to all output), and provides per-subtree SSR overrides via SsrContext. All generated primitives delegate to the low-level APIs \u2014 no new mechanism, just composition.",
+"index": "Public barrel. Re-exports only the 7 public value APIs and the public types. Internal modules (policies, platform, internal, query\u2026) are not exposed, keeping the API surface small."
+}
+      const GROUP_ORDER = ['types', 'platform/', 'internal/', 'query/', 'policies/', 'media/', 'container/', 'shared/', 'responsive/', 'config/', 'index'];
+      const GROUP_LABEL = { types: 'types.ts', index: 'index.ts' };
+      function groupKey(m) { return m.id === 'types' ? 'types' : m.id === 'index' ? 'index' : m.dir; }
+      function fid(id) { return 'file-' + id.replace(/\//g, '__'); }
+      function srcOf(id) {
+        const b = document.querySelector('script.srcblob[data-id="' + id + '"]');
+        return b ? b.textContent.replace(/^\n/, '').replace(/\s+$/, '') : '';
+      }
+      const fgEl = document.getElementById('fileGroups');
+      GROUP_ORDER.forEach((gk) => {
+        const items = N.map((n) => byId[n[0]]).filter((m) => groupKey(m) === gk);
+        if (!items.length) return;
+        const title = document.createElement('div');
+        title.className = 'fc-group-title';
+        title.textContent = GROUP_LABEL[gk] || gk;
+        fgEl.appendChild(title);
+        items.forEach((m) => {
+          const card = document.createElement('div');
+          card.className = 'filecard';
+          card.id = fid(m.id);
+          card.innerHTML =
+            '<button class="filecard-head" type="button">' +
+            '<span class="fc-path"><span class="dir">' + m.dir + '</span>' + m.file + '</span>' +
+            '<span class="fc-meta"><span class="fc-kind" style="background:' + KIND[m.kind].c + '22;color:' + KIND[m.kind].c + '">' + KIND[m.kind].label + '</span><span class="fc-layer">L' + m.layer + '</span><span class="chev">\u25B8</span></span>' +
+            '</button>' +
+            '<div class="filecard-body"><p class="fc-role">' + (FILE_ROLES[m.id] || m.role) + '</p><pre class="code">' + hl(srcOf(m.id)) + '</pre></div>';
+          card.querySelector('.filecard-head').addEventListener('click', () => card.classList.toggle('open'));
+          fgEl.appendChild(card);
+        });
+      });
+      document.getElementById('fcExpand').addEventListener('click', () => document.querySelectorAll('.filecard').forEach((c) => c.classList.add('open')));
+      document.getElementById('fcCollapse').addEventListener('click', () => document.querySelectorAll('.filecard').forEach((c) => c.classList.remove('open')));
+      document.addEventListener('click', (e) => {
+        const el = e.target.closest('[data-src]');
+        if (!el) return;
+        const card = document.getElementById(fid(el.dataset.src));
+        if (!card) return;
+        card.classList.add('open');
+        card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        card.classList.add('flash');
+        setTimeout(() => card.classList.remove('flash'), 1200);
+      });
+
+      // initial selection
+      select('responsive/Responsive');
+    </script>
+  </body>
+</html>
