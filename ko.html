@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>responsive-keepalive · Architecture &amp; API Pipelines</title>
+    <title>responsive-keepalive · 전체 구조와 API 파이프라인</title>
     <link rel="alternate" hreflang="en" href="index.html" />
     <link rel="alternate" hreflang="ko" href="ko.html" />
     <style>
@@ -707,13 +707,13 @@
       <div class="topnav-inner">
         <span class="logo">responsive-keepalive</span>
         <nav>
-          <a href="#overview">Overview</a>
-          <a href="#architecture">Architecture</a>
-          <a href="#graph">Reference Graph</a>
-          <a href="#pipelines">API Pipelines</a>
-          <a href="#files">Files</a>
+          <a href="#overview">개요</a>
+          <a href="#architecture">아키텍처</a>
+          <a href="#graph">참조 그래프</a>
+          <a href="#pipelines">API 파이프라인</a>
+          <a href="#files">파일별 상세</a>
         </nav>
-        <a class="lang-switch" href="ko.html" hreflang="ko" title="한국어로 보기">한국어</a>
+        <a class="lang-switch" href="index.html" hreflang="en" title="View in English">English</a>
       </div>
     </div>
 
@@ -721,24 +721,25 @@
       <!-- HERO -->
       <section class="hero" id="overview">
         <div class="eyebrow">whole-library reference</div>
-        <h1>Architecture &amp; API Pipelines</h1>
+        <h1>전체 구조와 API 파이프라인</h1>
         <p class="lead">
-          A reference for <b>how the 24 source files reference each other</b> and
-          <b>which files each exported API call passes through</b>.
+          이 문서는 라이브러리의 <b>24개 소스 파일이 서로를 어떻게 참조하는지</b>, 그리고 소비자가
+          내보내진 <b>각 API를 호출했을 때 데이터가 어떤 파일들을 거쳐 처리되는지</b>를 한곳에
+          정리합니다.
         </p>
 
         <div class="thesis">
-          Uses React 19.2's <b>&lt;Activity mode="visible|hidden"&gt;</b> to keep structurally
-          different mobile/desktop trees <b>mounted with state preserved</b> across breakpoint switches.
-          Scroll position, input values, and open states survive the switch.
-          Automatically falls back to a clean swap on runtimes without Activity.
+          React 19.2의 <b>&lt;Activity mode="visible|hidden"&gt;</b>를 사용해, 구조가 완전히 다른
+          모바일/데스크톱 트리를 브레이크포인트가 바뀌어도 <b>마운트된 채로(상태 보존)</b> 유지합니다.
+          전환 시 스크롤·입력·열림 상태가 사라지지 않습니다. Activity가 없는 런타임에서는 자동으로
+          swap으로 폴백합니다.
         </div>
 
         <div class="pillrow">
           <span class="pill">React 19.2 · &lt;Activity&gt;</span>
           <span class="pill">7 public APIs</span>
           <span class="pill">24 source files · 4 layers</span>
-          <span class="pill">integer px breakpoints</span>
+          <span class="pill">정수 px breakpoints</span>
           <span class="pill">SSR-safe · useSyncExternalStore</span>
         </div>
       </section>
@@ -746,10 +747,10 @@
       <!-- ARCHITECTURE -->
       <section id="architecture">
         <div class="eyebrow">layered architecture</div>
-        <h2>4 Layers</h2>
+        <h2>4개 레이어</h2>
         <p class="sec-desc">
-          Imports always flow from upper layers → down to lower layers (no cycles). Lower layers are
-          more pure and less React-dependent. Click a chip to select that file in the graph below.
+          import은 항상 위 레이어 → 아래 레이어로만 흐릅니다(순환 없음). 아래로 갈수록 순수하고
+          React에 덜 의존합니다. 칩을 누르면 아래 그래프에서 해당 파일이 선택됩니다.
         </p>
         <div class="layers" id="layers"></div>
       </section>
@@ -757,51 +758,51 @@
       <!-- GRAPH -->
       <section id="graph">
         <div class="eyebrow">file reference graph</div>
-        <h2>File Reference Graph</h2>
+        <h2>모든 파일 간 참조 관계</h2>
         <p class="sec-desc">
-          Click a node to highlight the files it <b style="color: var(--orange)">imports (orange)</b>
-          and the files that <b style="color: var(--blue)">import it (blue)</b>. Dashed lines are type-only imports.
+          노드를 클릭하면 그 파일이 <b style="color: var(--orange)">import 하는 파일(주황)</b>과 그
+          파일을 <b style="color: var(--blue)">import 하는 파일(파랑)</b>이 강조됩니다. 점선은 타입 전용
+          import입니다.
         </p>
         <div class="graph-wrap">
           <div class="graph-box">
             <svg id="svg" xmlns="http://www.w3.org/2000/svg"></svg>
           </div>
           <aside class="detail" id="detail">
-            <div class="dt-file">Click a node</div>
+            <div class="dt-file">노드를 클릭하세요</div>
             <div class="dt-role" style="margin-top: 10px">
-              Select a file in the graph to see its role and dependencies here.
+              왼쪽 그래프에서 파일을 선택하면 역할과 의존 관계가 여기에 표시됩니다.
             </div>
           </aside>
         </div>
         <div class="legend" id="legend"></div>
         <div class="graph-hint">
-          ← Left = pure / leaf &nbsp;·&nbsp; Right = top-level (barrel index.ts).
-          Solid line = value import, dashed = type-only import, bold = re-export from index.ts.
+          ← 왼쪽일수록 순수/리프 · 오른쪽일수록 상위(배럴 index.ts). 실선=값 import, 점선=타입
+          import, 굵은 재내보내기 화살표는 index.ts에서 나옵니다.
         </div>
       </section>
 
       <!-- PIPELINES -->
       <section id="pipelines">
         <div class="eyebrow">consumer api → data pipeline</div>
-        <h2>Usage Examples &amp; Data Pipelines per API</h2>
+        <h2>API별 사용 예시와 처리 파이프라인</h2>
         <p class="sec-desc">
-          For each of the 7 exported APIs, shows consumer code and the file pipeline each call travels
-          through. Click a file chip in any step to select that file in the graph above.
+          내보내진 7개 API 각각에 대해, 소비자 코드(패턴)와 그 호출이 거치는 파일 파이프라인을 단계로
+          보여줍니다. 각 단계의 파일 칩을 누르면 위 그래프에서 그 파일이 선택됩니다.
         </p>
         <div id="apis"></div>
       </section>
       <!-- FILES -->
       <section id="files">
         <div class="eyebrow">file-by-file</div>
-        <h2>File Contents &amp; Roles</h2>
+        <h2>파일별 내용과 역할</h2>
         <p class="sec-desc">
-          Role and source code for all 24 source files (tests excluded). Click a header to expand.
-          File chips in the graph and pipelines, and the "View source" button in the detail panel,
-          also navigate here.
+          테스트를 제외한 24개 소스 파일 전부의 역할과 실제 코드입니다. 헤더를 누르면 펼쳐지고, 위
+          그래프·파이프라인의 파일 칩이나 상세 패널의 "소스 보기"에서도 해당 카드로 이동합니다.
         </p>
         <div class="fc-toolbar">
-          <button class="fc-btn" id="fcExpand" type="button">Expand All</button>
-          <button class="fc-btn" id="fcCollapse" type="button">Collapse All</button>
+          <button class="fc-btn" id="fcExpand" type="button">모두 펼치기</button>
+          <button class="fc-btn" id="fcCollapse" type="button">모두 접기</button>
         </div>
         <div id="fileGroups"></div>
       </section>
@@ -1783,47 +1784,47 @@ export type {
     <script>
       // ---------------------------------------------------------------- data
       const KIND = {
-        pure: { c: '#9ece6a', label: 'pure fn' },
-        hook: { c: '#7aa2f7', label: 'React hook' },
-        component: { c: '#bb9af7', label: 'component' },
-        factory: { c: '#ff9e64', label: 'factory' },
-        type: { c: '#7dcfff', label: 'type' },
-        platform: { c: '#e0af68', label: 'platform boundary' },
-        internal: { c: '#9aa5ce', label: 'internal util' },
-        barrel: { c: '#f7768e', label: 'barrel' },
+        pure: { c: '#9ece6a', label: '순수 함수' },
+        hook: { c: '#7aa2f7', label: 'React 훅' },
+        component: { c: '#bb9af7', label: '컴포넌트' },
+        factory: { c: '#ff9e64', label: '팩토리' },
+        type: { c: '#7dcfff', label: '타입' },
+        platform: { c: '#e0af68', label: '플랫폼 경계' },
+        internal: { c: '#9aa5ce', label: '내부 유틸' },
+        barrel: { c: '#f7768e', label: '배럴' },
       };
 
       // id, dir, file, layer, kind, role
       const N = [
         // L0 leaves
-        ['types', '', 'types.ts', 0, 'type', 'All public type definitions (Strategy, Mount, VariantMap, MediaInput …)'],
-        ['query/breakpointsToQueries', 'query/', 'breakpointsToQueries.ts', 0, 'pure', 'integer px → non-overlapping mobile-first query map (validation · sort)'],
-        ['media/createMediaQueryStore', 'media/', 'createMediaQueryStore.ts', 0, 'pure', 'query → variant store factory (matchMedia, React-agnostic)'],
-        ['policies/useSettledValue', 'policies/', 'useSettledValue.ts', 0, 'hook', 'anti-thrash: commit only when value is stable for settleMs'],
-        ['policies/useHeldWhileComposing', 'policies/', 'useHeldWhileComposing.ts', 0, 'hook', 'hold switch during IME composition, apply on compositionend'],
-        ['responsive/renderVariant', 'responsive/', 'renderVariant.ts', 0, 'pure', 'node | (()=>node) → normalize to node'],
-        ['responsive/resolveMountedKeys', 'responsive/', 'resolveMountedKeys.ts', 0, 'pure', 'decide which keys to mount (lazy = activated, eager = all)'],
-        ['container/resolveContainerVariant', 'container/', 'resolveContainerVariant.ts', 0, 'pure', 'width + min-width map → variant (floor guaranteed)'],
-        ['container/useElementWidth', 'container/', 'useElementWidth.ts', 0, 'hook', 'track content-box width via ResizeObserver (null before first measurement)'],
-        ['shared/createSharedStore', 'shared/', 'createSharedStore.ts', 0, 'pure', 'key-based value store + per-key subscriptions (React-agnostic)'],
-        ['platform/activity', 'platform/', 'activity.ts', 0, 'platform', 'React.Activity DIP boundary + support detection'],
-        ['internal/warnOnce', 'internal/', 'warnOnce.ts', 0, 'internal', 'console.warn once per message (dedup)'],
+        ['types', '', 'types.ts', 0, 'type', '모든 공개 타입 정의 (Strategy, Mount, VariantMap, MediaInput …)'],
+        ['query/breakpointsToQueries', 'query/', 'breakpointsToQueries.ts', 0, 'pure', '정수 px → 비겹침 모바일퍼스트 쿼리맵 (검증·정렬)'],
+        ['media/createMediaQueryStore', 'media/', 'createMediaQueryStore.ts', 0, 'pure', '쿼리→variant store 팩토리 (matchMedia, React 무관)'],
+        ['policies/useSettledValue', 'policies/', 'useSettledValue.ts', 0, 'hook', 'anti-thrash: 값이 settleMs 안정될 때만 커밋'],
+        ['policies/useHeldWhileComposing', 'policies/', 'useHeldWhileComposing.ts', 0, 'hook', 'IME 조합 중 전환 보류, compositionend에 적용'],
+        ['responsive/renderVariant', 'responsive/', 'renderVariant.ts', 0, 'pure', 'node | (()=>node) → node 정규화'],
+        ['responsive/resolveMountedKeys', 'responsive/', 'resolveMountedKeys.ts', 0, 'pure', '마운트할 키 결정 (lazy=활성된 것, eager=전부)'],
+        ['container/resolveContainerVariant', 'container/', 'resolveContainerVariant.ts', 0, 'pure', '폭 + min-width 맵 → variant (floor 보장)'],
+        ['container/useElementWidth', 'container/', 'useElementWidth.ts', 0, 'hook', 'ResizeObserver로 content-box 폭 추적 (측정 전 null)'],
+        ['shared/createSharedStore', 'shared/', 'createSharedStore.ts', 0, 'pure', '키 기반 값 store + 키별 구독 (React 무관)'],
+        ['platform/activity', 'platform/', 'activity.ts', 0, 'platform', 'React.Activity DIP 경계 + 지원 여부 감지'],
+        ['internal/warnOnce', 'internal/', 'warnOnce.ts', 0, 'internal', '메시지당 1회만 console.warn (중복 제거)'],
         // L1
-        ['query/normalizeQueries', 'query/', 'normalizeQueries.ts', 1, 'pure', 'integer/string branch → query map (mix rejected at runtime)'],
-        ['media/useMatchedVariant', 'media/', 'useMatchedVariant.ts', 1, 'hook', 'raw matched variant (useSyncExternalStore, store cached)'],
-        ['shared/SharedStateScope', 'shared/', 'SharedStateScope.tsx', 1, 'component', 'create one store, provide via context (SSR-safe, ref)'],
-        ['responsive/SwapVariant', 'responsive/', 'SwapVariant.tsx', 1, 'component', 'render active variant only; key → clean unmount/mount'],
-        ['responsive/KeepAliveVariants', 'responsive/', 'KeepAliveVariants.tsx', 1, 'component', 'keep inactive variants via <Activity>; manage mount ledger'],
+        ['query/normalizeQueries', 'query/', 'normalizeQueries.ts', 1, 'pure', '정수/문자열 분기 → 쿼리맵 (혼용 런타임 거부)'],
+        ['media/useMatchedVariant', 'media/', 'useMatchedVariant.ts', 1, 'hook', 'raw 매칭 variant (useSyncExternalStore, store 캐시)'],
+        ['shared/SharedStateScope', 'shared/', 'SharedStateScope.tsx', 1, 'component', 'store 1개 생성·context 제공 (SSR-safe, ref)'],
+        ['responsive/SwapVariant', 'responsive/', 'SwapVariant.tsx', 1, 'component', '활성 variant만 렌더; key→clean 언마운트/마운트'],
+        ['responsive/KeepAliveVariants', 'responsive/', 'KeepAliveVariants.tsx', 1, 'component', '<Activity>로 비활성 유지; 마운트 장부 관리'],
         // L2
-        ['media/useMediaVariant', 'media/', 'useMediaVariant.ts', 2, 'hook', 'viewport → variant: normalize → match → settle → IME'],
-        ['media/useResponsiveValue', 'media/', 'useResponsiveValue.ts', 2, 'hook', 'viewport → value: normalize → match → settle'],
-        ['container/useContainerVariant', 'container/', 'useContainerVariant.ts', 2, 'hook', 'container width → variant: measure → resolve → settle'],
-        ['shared/useSharedState', 'shared/', 'useSharedState.ts', 2, 'hook', 'key-based shared state within a scope (useState shape)'],
-        ['responsive/Responsive', 'responsive/', 'Responsive.tsx', 2, 'component', 'dispatcher: select keepAlive/swap + auto-provide scope'],
+        ['media/useMediaVariant', 'media/', 'useMediaVariant.ts', 2, 'hook', 'viewport→variant: 정규화→매칭→settle→IME'],
+        ['media/useResponsiveValue', 'media/', 'useResponsiveValue.ts', 2, 'hook', 'viewport→값: 정규화→매칭→settle'],
+        ['container/useContainerVariant', 'container/', 'useContainerVariant.ts', 2, 'hook', '컨테이너 폭→variant: 측정→resolve→settle'],
+        ['shared/useSharedState', 'shared/', 'useSharedState.ts', 2, 'hook', 'scope 내 키 공유 상태 (useState 형태)'],
+        ['responsive/Responsive', 'responsive/', 'Responsive.tsx', 2, 'component', '디스패처: keepAlive/swap 선택 + scope 자동 제공'],
         // L3
-        ['config/createResponsive', 'config/', 'createResponsive.tsx', 3, 'factory', 'single config → create Responsive/Provider/Match/hooks'],
+        ['config/createResponsive', 'config/', 'createResponsive.tsx', 3, 'factory', '설정 1곳 → Responsive/Provider/Match/hooks 생성'],
         // L4
-        ['index', '', 'index.ts', 4, 'barrel', 'public barrel — re-export values & types'],
+        ['index', '', 'index.ts', 4, 'barrel', '공개 배럴 — 값·타입 재내보내기'],
       ];
 
       // edges: [from, to, kind]  kind: 'val' | 'type' | 'reexport'
@@ -1884,11 +1885,11 @@ export type {
 
       // ---------------------------------------------------------------- layers section
       const layerMeta = [
-        ['L0', 'Leaf · Pure / Platform'],
-        ['L1', 'Small compositions'],
-        ['L2', 'Public hooks & components'],
-        ['L3', 'Factory'],
-        ['L4', 'Barrel'],
+        ['L0', '리프 · 순수/플랫폼'],
+        ['L1', '소규모 조합'],
+        ['L2', '공개 훅 · 컴포넌트'],
+        ['L3', '팩토리'],
+        ['L4', '배럴'],
       ];
       const layersEl = document.getElementById('layers');
       layerMeta.forEach((lm, li) => {
@@ -2032,12 +2033,12 @@ export type {
           `<h4>imports → (${imps.length})</h4>` +
           (imps.length
             ? `<div class="chips">${imps.map(([t, k]) => chip(t) + (k === 'type' ? '<span style="color:var(--muted);font-size:10px">·type</span>' : '')).join('')}</div>`
-            : `<div class="empty">none — leaf module</div>`) +
+            : `<div class="empty">없음 — 리프 모듈</div>`) +
           `<h4>imported by ← (${impBy.length})</h4>` +
           (impBy.length
             ? `<div class="chips">${impBy.map(([f]) => chip(f)).join('')}</div>`
-            : `<div class="empty">none — top-level (re-exported from barrel only)</div>`) +
-          `<button class="fc-btn" data-src="${id}" style="margin-top:16px">📄 View source ↓</button>`;
+            : `<div class="empty">없음 — 최상위(배럴에서만 재내보내기)</div>`) +
+          `<button class="fc-btn" data-src="${id}" style="margin-top:16px">📄 이 파일의 소스 보기 ↓</button>`;
       }
 
       // ---------------------------------------------------------------- legend
@@ -2072,62 +2073,62 @@ export type {
         {
           id: 'Responsive', kind: 'component', kc: '#bb9af7',
           sig: 'function Responsive<K>(props: ResponsiveProps<K>): ReactNode',
-          blurb: 'Low-level primitive. Pass the active variant and variants map directly; the library handles keep-alive/swap and lazy/eager mounting. The variant can come from anywhere (hook, feature flag, SSR header).',
+          blurb: '저수준 기본기. 활성 variant와 variants 맵을 직접 넘기면, 라이브러리가 keep-alive/swap과 lazy/eager 마운트를 처리합니다. variant는 어디서든 만들어 넘길 수 있습니다(훅·플래그·SSR 헤더).',
           code:
 `import { Responsive } from 'responsive-keepalive';
 
-// variant is caller-controlled — typically from useMediaVariant
+// variant는 직접 통제 — 보통 useMediaVariant의 반환값
 const variant = useMediaVariant({ mobile: 0, desktop: 768 }, { ssr: 'mobile' });
 
 <Responsive
   variant={variant}
   variants={{
-    mobile: () => <MobileLayout />,   // ()=>node: defer creation until mount
+    mobile: () => <MobileLayout />,   // ()=>node: 마운트 전까지 생성 지연
     desktop: () => <DesktopLayout />,
   }}
-  strategy="keepAlive"  // default — keep inactive branches alive
-  mount="lazy"          // default — mount on first activation
+  strategy="keepAlive"  // 기본값 — 비활성 분기 상태 보존
+  mount="lazy"          // 기본값 — 활성될 때 마운트
 />;`,
           steps: [
-            { f: ['responsive/Responsive'], t: 'Computes whether keepAlive is possible from <b>strategy</b> and <b>isActivitySupported()</b>. If keepAlive was requested but Activity is unavailable, warns once and falls back to swap.', xf: ['platform/activity', 'internal/warnOnce'] },
-            { f: ['shared/SharedStateScope'], t: 'Wraps children in a <b>shared scope</b> — so descendant useSharedState works without extra setup.', xf: ['shared/createSharedStore'] },
-            { f: ['responsive/KeepAliveVariants'], t: '(keepAlive) Records activated keys → <b>resolveMountedKeys</b> decides which to mount (lazy = activated, eager = all) → wraps each in <b>&lt;Activity visible|hidden&gt;</b> and normalises via <b>renderVariant</b>.', xf: ['responsive/resolveMountedKeys', 'platform/activity', 'responsive/renderVariant'] },
-            { f: ['responsive/SwapVariant'], t: '(swap) Renders only the active variant via <b>&lt;Fragment key={variant}&gt;</b> → clean unmount/mount on switch (state lost). Normalised via renderVariant.', xf: ['responsive/renderVariant'] },
-            { out: true, t: 'Active tree is visible; inactive trees are kept alive and hidden (or unmounted in swap mode).' },
+            { f: ['responsive/Responsive'], t: '<b>strategy</b>와 <b>isActivitySupported()</b>로 keepAlive 가능 여부를 계산. keepAlive를 원했지만 Activity가 없으면 한 번 경고하고 swap으로 폴백.', xf: ['platform/activity', 'internal/warnOnce'] },
+            { f: ['shared/SharedStateScope'], t: 'children을 <b>shared 스코프</b>로 감쌈 — 그래서 하위 useSharedState가 별도 설정 없이 동작.', xf: ['shared/createSharedStore'] },
+            { f: ['responsive/KeepAliveVariants'], t: '(keepAlive) 활성된 키를 장부에 기록 → <b>resolveMountedKeys</b>가 마운트할 키 결정(lazy=활성된 것, eager=전부) → 각 키를 <b>&lt;Activity visible|hidden&gt;</b>로 감싸 <b>renderVariant</b>로 노드화.', xf: ['responsive/resolveMountedKeys', 'platform/activity', 'responsive/renderVariant'] },
+            { f: ['responsive/SwapVariant'], t: '(swap) <b>&lt;Fragment key={variant}&gt;</b>로 활성 분기만 렌더 → 전환 시 clean 언마운트/마운트(상태 소실). renderVariant로 노드화.', xf: ['responsive/renderVariant'] },
+            { out: true, t: '활성 트리는 보이고, 비활성 트리는 keep-alive로 숨겨진 채 유지(또는 swap이면 언마운트).' },
           ],
-          note: 'The key to keep-alive is fixing the tree position with a <b>stable React key</b> (KeepAliveVariants maps to variant keys), which preserves state.',
+          note: 'keep-alive의 핵심은 <b>안정적인 React key</b>(KeepAliveVariants가 variant 키로 매핑)로 트리 위치를 고정해 상태를 보존한다는 점입니다.',
         },
         {
           id: 'useMediaVariant', kind: 'hook', kc: '#7aa2f7',
           sig: 'useMediaVariant<K>(breakpoints: MediaInput<K>, options?): K',
-          blurb: 'Resolves a variant key from the viewport. Accepts integer px breakpoints (recommended) or raw media-query strings (for non-width conditions like orientation).',
+          blurb: 'viewport에서 variant 키를 해석합니다. 정수 px breakpoint(권장) 또는 원시 미디어쿼리 문자열(orientation 등 너비 외 조건용)을 받습니다.',
           code:
 `import { useMediaVariant } from 'responsive-keepalive';
 
-// integer breakpoints — converted to mobile-first bands internally
+// 정수 breakpoint — 내부에서 모바일퍼스트 밴드로 변환
 const variant = useMediaVariant(
   { mobile: 0, desktop: 768 },
   { ssr: 'mobile', settleMs: 150, deferWhileComposing: true },
 );
 
-// non-width conditions use raw query strings (escape hatch)
+// 너비가 아닌 조건은 원시 문자열로 (탈출구)
 const mode = useMediaVariant({
   light: '(prefers-color-scheme: light)',
   dark: '(prefers-color-scheme: dark)',
 });`,
           steps: [
-            { f: ['query/normalizeQueries'], t: 'Normalise input — integers → <b>breakpointsToQueries</b> generates non-overlapping bands; strings → pass through; mix → throw.', xf: ['query/breakpointsToQueries'] },
-            { f: ['media/useMatchedVariant'], t: 'Cache the store by query map key (JSON.stringify + fallback) → <b>createMediaQueryStore</b> subscribes to matchMedia; returns first matching key (or fallback) via <b>useSyncExternalStore</b> — this is the <b>raw</b> value.', xf: ['media/createMediaQueryStore'] },
-            { f: ['policies/useSettledValue'], t: 'anti-thrash — commit a raw change only after it has been stable for settleMs (suppress boundary jitter).' },
-            { f: ['policies/useHeldWhileComposing'], t: 'IME policy (outermost) — hold the switch during composition, apply on compositionend.' },
-            { out: true, t: 'Variant key K. Policies are applied downstream of the store; <b>outermost wins</b> (IME hold beats settle).' },
+            { f: ['query/normalizeQueries'], t: '입력 정규화 — 정수면 <b>breakpointsToQueries</b>로 비겹침 밴드 생성, 문자열이면 그대로, 혼용이면 throw.', xf: ['query/breakpointsToQueries'] },
+            { f: ['media/useMatchedVariant'], t: '쿼리맵으로 store를 캐시(JSON.stringify 키) → <b>createMediaQueryStore</b>가 matchMedia 구독, 첫 매칭 키(없으면 fallback)를 <b>useSyncExternalStore</b>로 반환 — 이게 <b>raw</b> 값.', xf: ['media/createMediaQueryStore'] },
+            { f: ['policies/useSettledValue'], t: 'anti-thrash — settleMs 동안 안정될 때만 raw 변화를 커밋(경계 떨림 억제).' },
+            { f: ['policies/useHeldWhileComposing'], t: 'IME 정책(가장 바깥) — 조합 중에는 전환 보류, compositionend에 적용.' },
+            { out: true, t: 'variant 키 K. 정책은 store 하류에서 적용되며 <b>바깥쪽 우선</b>(IME hold가 settle을 이김).' },
           ],
-          note: 'The store always emits <b>raw</b> matches only. settleMs and deferWhileComposing are <b>per-hook policies</b>, not part of the store — multiple consumers can use different policies on the same shared store.',
+          note: 'store는 항상 <b>raw</b> 매칭만 emit합니다. settleMs·deferWhileComposing은 store가 아니라 <b>훅별 정책</b>이라, 공유 store에 섞이지 않습니다(여러 소비자가 서로 다른 정책을 쓸 수 있음).',
         },
         {
           id: 'useResponsiveValue', kind: 'hook', kc: '#7aa2f7',
           sig: 'useResponsiveValue<K, V>(breakpoints: MediaInput<K>, values: Record<K,V>, options?): V',
-          blurb: 'Picks a single <b>value</b> per breakpoint — column count, gap, label — when a full component tree is not needed. The scalar sibling of &lt;Responsive&gt;.',
+          blurb: '브레이크포인트별로 “값” 하나를 고릅니다 — 열 수, gap, 라벨처럼 컴포넌트 트리까지는 필요 없을 때. <Responsive>의 스칼라 버전입니다.',
           code:
 `import { useResponsiveValue } from 'responsive-keepalive';
 
@@ -2136,19 +2137,19 @@ const columns = useResponsiveValue(
   { mobile: 1, tablet: 2, desktop: 3 },
   { ssr: 'mobile' },
 );
-// columns: number — value only, no tree`,
+// columns: number — 트리 없이 값만 분기`,
           steps: [
-            { f: ['query/normalizeQueries'], t: 'Integer/string normalisation (same path as useMediaVariant).', xf: ['query/breakpointsToQueries'] },
-            { f: ['media/useMatchedVariant'], t: 'Subscribe to the matched variant key via useSyncExternalStore.', xf: ['media/createMediaQueryStore'] },
-            { f: ['policies/useSettledValue'], t: 'Stabilise the variant with anti-thrash.' },
-            { out: true, t: 'Returns <b>values[variant]</b>. (Value selection — IME hold is not needed here.)' },
+            { f: ['query/normalizeQueries'], t: '정수/문자열 정규화(useMediaVariant와 동일 경로).', xf: ['query/breakpointsToQueries'] },
+            { f: ['media/useMatchedVariant'], t: '매칭된 variant 키를 useSyncExternalStore로 구독.', xf: ['media/createMediaQueryStore'] },
+            { f: ['policies/useSettledValue'], t: 'anti-thrash로 variant 안정화.' },
+            { out: true, t: '<b>values[variant]</b> 반환. (값 선택이라 IME hold는 불필요 — 적용하지 않음.)' },
           ],
-          note: 'Uses the same matching pipeline as useMediaVariant, but at the end picks a value from the <b>values map</b> instead of rendering a tree.',
+          note: 'useMediaVariant와 같은 매칭 파이프라인을 쓰되, 마지막에 트리 대신 <b>values 맵에서 값을 꺼내</b>는 점만 다릅니다.',
         },
         {
           id: 'useContainerVariant', kind: 'hook', kc: '#7aa2f7',
           sig: 'useContainerVariant<K, E>(ref, breakpoints: Record<K,number>, options?): K',
-          blurb: 'Picks a variant from the <b>element\'s own width</b> (ResizeObserver) rather than the viewport. Useful when the same card should be "row" in a wide column and "stack" in a narrow one.',
+          blurb: 'viewport가 아니라 <b>요소 자신의 폭</b>(ResizeObserver)으로 variant를 고릅니다. 같은 카드가 넓은 칼럼에선 row, 좁은 칼럼에선 stack이 되어야 할 때.',
           code:
 `import { useRef } from 'react';
 import { useContainerVariant } from 'responsive-keepalive';
@@ -2156,24 +2157,24 @@ import { useContainerVariant } from 'responsive-keepalive';
 const ref = useRef<HTMLDivElement>(null);
 const variant = useContainerVariant(
   ref,
-  { stack: 0, row: 420, wide: 680 }, // variant → minimum content width (px)
+  { stack: 0, row: 420, wide: 680 }, // variant → 최소 content 폭(px)
   { ssr: 'stack' },
 );
 
-return <div ref={ref}>{/* branch on variant */}</div>;`,
+return <div ref={ref}>{/* variant로 분기 */}</div>;`,
           steps: [
-            { f: ['container/resolveContainerVariant'], t: 'Compute fallback — if no ssr, use the variant at width 0 (= floor). Rule: largest threshold ≤ width wins; always selects one.' },
-            { f: ['container/useElementWidth'], t: 'Track the ref element\'s content-box width via <b>ResizeObserver</b>. Returns null before the first measurement and on the server.' },
-            { f: ['container/resolveContainerVariant'], t: 'Recalculate variant from measured width (keeps fallback when width === null).' },
-            { f: ['policies/useSettledValue'], t: 'anti-thrash to suppress flicker from width jitter.' },
-            { out: true, t: 'Variant key K. Sourced from <b>element width, not matchMedia</b> — does not go through the media store pipeline.' },
+            { f: ['container/resolveContainerVariant'], t: 'fallback 계산 — ssr이 없으면 폭 0에서의 variant(=floor). “폭 이하 최대 임계값” 규칙, 항상 하나 선택.' },
+            { f: ['container/useElementWidth'], t: '<b>ResizeObserver</b>로 ref 요소의 content-box 폭 추적. 첫 측정 전(그리고 서버)에는 null.' },
+            { f: ['container/resolveContainerVariant'], t: '측정된 폭 → variant 재계산(width===null이면 fallback 유지).' },
+            { f: ['policies/useSettledValue'], t: 'anti-thrash로 폭 떨림에 의한 깜빡임 억제.' },
+            { out: true, t: 'variant 키 K. <b>matchMedia가 아니라 요소 폭</b> 기반이라 미디어 store 파이프라인을 거치지 않습니다.' },
           ],
-          note: 'Shares the anti-thrash policy (useSettledValue) with the viewport hooks, but the match source is different — container uses <b>ResizeObserver + pure resolveContainerVariant</b>.',
+          note: '뷰포트 훅들과 정책(useSettledValue)은 공유하지만, 매칭 소스가 다릅니다 — 컨테이너는 <b>ResizeObserver + 순수 resolveContainerVariant</b>를 씁니다.',
         },
         {
           id: 'createResponsive', kind: 'factory', kc: '#ff9e64',
           sig: 'createResponsive<K>(breakpoints: Record<K,number>, defaults?): ConfiguredResponsive<K>',
-          blurb: 'Put breakpoint configuration in one file, then generate the bound &lt;Responsive&gt;, Provider, Match gates, and hooks in one call. Variant keys are inferred and type-checked.',
+          blurb: '브레이크포인트 설정을 한 파일에 두고, 그에 묶인 <Responsive>·Provider·Match 게이트·훅을 한 번에 생성합니다. variant 키가 추론·타입체크됩니다.',
           code:
 `// responsive.ts
 import { createResponsive } from 'responsive-keepalive';
@@ -2182,59 +2183,59 @@ export const { Responsive, Provider, Match, useVariant, useResponsiveValue } =
   createResponsive({ mobile: 0, desktop: 768 }, { ssr: 'mobile' });
 export const { Mobile, Desktop } = Match;
 
-// usage
+// 사용처
 <Provider>
   <Responsive mobile={() => <M />} desktop={() => <D />} />
-  <Desktop><DesktopNav /></Desktop>   // composable gate
+  <Desktop><DesktopNav /></Desktop>   // 합성 가능한 게이트
 </Provider>;`,
           steps: [
-            { f: ['config/createResponsive'], t: 'Check for reserved prop key collisions (strategy/mount/ssr/settleMs/deferWhileComposing) → throw on conflict.' },
-            { f: ['query/breakpointsToQueries'], t: 'Convert integer breakpoints → query map <b>once</b> and bind to all generated output.' },
-            { f: ['shared/SharedStateScope'], t: '<b>Provider</b> wraps children in an SSR override context + SharedStateScope (scope auto-provided).', xf: ['shared/createSharedStore'] },
-            { f: ['media/useMediaVariant', 'media/useResponsiveValue'], t: '<b>useVariant / useResponsiveValue</b> delegate to low-level hooks with the bound query map (policy merge: options → Provider ssr → defaults).' },
-            { f: ['responsive/Responsive'], t: '<b>Responsive</b> (named props) splits reserved props, resolves variant via useVariant, and delegates to the controlled &lt;Responsive&gt;. <b>Match</b> gates show/hide via useVariant() === key with &lt;Activity&gt;.', xf: ['platform/activity', 'internal/warnOnce'] },
-            { out: true, t: 'A type-safe primitive bundle bound to the config. Missing or misspelled keys are compile errors.' },
+            { f: ['config/createResponsive'], t: '예약 prop과 충돌하는 키(strategy/mount/ssr/settleMs/deferWhileComposing) 검사 → 충돌 시 throw.' },
+            { f: ['query/breakpointsToQueries'], t: '정수 breakpoints → 쿼리맵을 <b>한 번</b> 변환해 모든 산출물에 고정(바인딩).' },
+            { f: ['shared/SharedStateScope'], t: '<b>Provider</b>는 SSR override context + SharedStateScope로 children을 감쌈(스코프 자동 제공).', xf: ['shared/createSharedStore'] },
+            { f: ['media/useMediaVariant', 'media/useResponsiveValue'], t: '<b>useVariant / useResponsiveValue</b>는 바인딩된 쿼리맵으로 저수준 훅에 위임(정책 병합: options→Provider ssr→defaults).' },
+            { f: ['responsive/Responsive'], t: '<b>Responsive</b>(네임드 prop)는 예약 prop을 분리하고 useVariant로 variant를 구해 컨트롤드 <Responsive>에 위임. <b>Match</b> 게이트는 useVariant()===key로 &lt;Activity&gt; 표시.', xf: ['platform/activity', 'internal/warnOnce'] },
+            { out: true, t: '설정에 묶인 타입세이프 기본기 묶음. 키 누락/오타는 컴파일 에러.' },
           ],
-          note: 'The factory does not introduce new mechanisms — it is <b>an assembly of low-level APIs</b>. All output ultimately flows through the useMediaVariant/Responsive/SharedStateScope pipelines.',
+          note: '팩토리는 새 메커니즘이 아니라 <b>저수준 API들의 조립</b>입니다 — 모든 산출물이 결국 useMediaVariant/Responsive/SharedStateScope의 파이프라인으로 흘러갑니다.',
         },
         {
           id: 'useSharedState', kind: 'hook', kc: '#7aa2f7',
           sig: 'useSharedState<T>(key: string, initialValue: T): [T, SetSharedState<T>]',
-          blurb: 'Lets sibling components share state by key without lifting it to a parent. The store lives in a stable ancestor so values survive swaps and remounts.',
+          blurb: '부모로 끌어올리지 않고도 형제 컴포넌트들이 key로 상태를 공유합니다. store가 스코프 조상에 살아 있어 swap·remount에도 값이 보존됩니다.',
           code:
 `import { useSharedState } from 'responsive-keepalive';
 
 function SearchField() {
-  // same key and initial value at every call site
+  // 같은 key·같은 초깃값을 모든 호출처에서
   const [query, setQuery] = useSharedState('search', '');
   return <input value={query} onChange={(e) => setQuery(e.target.value)} />;
 }
-// Use inside <Responsive>, factory <Provider>, or <SharedStateScope>`,
+// <Responsive>·팩토리 <Provider>·<SharedStateScope> 중 하나의 하위에서 사용`,
           steps: [
-            { f: ['shared/useSharedState', 'shared/SharedStateScope'], t: 'Read the scope store from context — <b>throws</b> if no scope exists (clear error).' },
-            { f: ['shared/createSharedStore'], t: 'Connect per-key subscribe/getSnapshot to <b>useSyncExternalStore</b>. Falls back to initialValue if no value exists yet.' },
-            { f: ['shared/createSharedStore'], t: 'setValue → store.set(key) → notifies all subscribers of that key.' },
-            { out: true, t: '[value, setValue]. Siblings in the same scope synchronise; the store in a stable ancestor means <b>values survive swap and remount</b>.' },
+            { f: ['shared/useSharedState', 'shared/SharedStateScope'], t: 'context로 스코프 store를 읽음 — 스코프가 없으면 <b>throw</b>(명확한 에러).' },
+            { f: ['shared/createSharedStore'], t: 'key별 subscribe/getSnapshot을 <b>useSyncExternalStore</b>로 연결. 첫 값이 없으면 initialValue.' },
+            { f: ['shared/createSharedStore'], t: 'setValue → store.set(key) → 그 key의 모든 구독자에게 통지.' },
+            { out: true, t: '[value, setValue]. 같은 스코프 형제끼리 동기화되고, store가 안정적 조상에 있어 <b>swap·remount에도 값 유지</b>.' },
           ],
-          note: '<b>Provider</b> and <b>&lt;Responsive&gt;</b> automatically mount a SharedStateScope internally. You only need to use SharedStateScope directly when sharing state between siblings that are outside both.',
+          note: '<b>Provider</b>와 <b>&lt;Responsive&gt;</b>는 내부에서 SharedStateScope를 자동 mount합니다. 그래서 그 하위에선 SharedStateScope를 직접 쓸 필요가 없고, 둘 중 어느 쪽에도 속하지 않은 형제끼리 공유할 때만 직접 감쌉니다.',
         },
         {
           id: 'SharedStateScope', kind: 'component', kc: '#bb9af7',
           sig: 'function SharedStateScope({ children }): ReactElement',
-          blurb: 'Creates one store and provides it to the subtree for useSharedState to synchronise on. Use directly when binding siblings outside a &lt;Responsive&gt; or Provider.',
+          blurb: 'useSharedState가 동기화할 store 하나를 만들어 하위 트리에 제공합니다. <Responsive>·Provider 밖의 형제들을 묶을 때 직접 사용합니다.',
           code:
 `import { SharedStateScope, useSharedState } from 'responsive-keepalive';
 
 <SharedStateScope>
-  <SearchField />   {/* both share the 'search' key */}
-  <SearchField />   {/* via the same store */}
+  <SearchField />   {/* 둘이 'search' 키를 */}
+  <SearchField />   {/* 같은 store로 공유 */}
 </SharedStateScope>;`,
           steps: [
-            { f: ['shared/SharedStateScope'], t: 'Creates the store <b>once</b> in a ref (not recreated on every render → SSR-safe, no cross-request leaks).', xf: ['shared/createSharedStore'] },
-            { f: ['shared/createSharedStore'], t: 'Exposes the created store to descendants via <b>SharedStateContext.Provider</b>.' },
-            { out: true, t: 'children receive the shared store via context. &lt;Responsive&gt; and the factory Provider already auto-mount this internally.' },
+            { f: ['shared/SharedStateScope'], t: 'ref에 store를 <b>한 번만</b> 생성(렌더마다 새로 만들지 않음 → SSR-safe, 요청 간 누수 없음).', xf: ['shared/createSharedStore'] },
+            { f: ['shared/createSharedStore'], t: '생성된 store를 <b>SharedStateContext.Provider</b>로 하위에 노출.' },
+            { out: true, t: 'children은 공유 store를 context로 받음. <Responsive>·팩토리 Provider가 이미 이걸 자동 mount합니다.' },
           ],
-          note: 'One scope = one store. Siblings in the same scope synchronise; siblings in separate scopes are isolated even if they use the same key.',
+          note: '한 스코프 = 한 store. 형제를 같은 스코프에 두면 동기화, 각각 다른 스코프에 두면 같은 key라도 격리됩니다.',
         },
       ];
 
@@ -2266,8 +2267,8 @@ function SearchField() {
           `<div class="api-blurb">${a.blurb}</div>` +
           `</div>` +
           `<div class="api-body">` +
-          `<div class="api-col code"><div class="col-label">Consumer code</div><pre class="code">${hl(a.code)}</pre></div>` +
-          `<div class="api-col"><div class="col-label">Data pipeline (files touched)</div><div class="pipe">${stepsHtml}</div></div>` +
+          `<div class="api-col code"><div class="col-label">소비자 코드</div><pre class="code">${hl(a.code)}</pre></div>` +
+          `<div class="api-col"><div class="col-label">데이터 파이프라인 (거치는 파일)</div><div class="pipe">${stepsHtml}</div></div>` +
           `</div>` +
           (a.note ? `<div class="api-note">${a.note}</div>` : '');
         apisEl.appendChild(card);
@@ -2291,32 +2292,7 @@ function SearchField() {
       });
 
       // ------------------------------------------------------------ per-file detail
-      const FILE_ROLES = {
-"types": "Single source of truth for all public types. Defines the Strategy\u00b7Mount literal unions, VariantMap, per-option interfaces (MediaVariantOptions\u2026), integer-input types BreakpointConfig\u00b7MediaInput, and the factory return type ConfiguredResponsive. No runtime code; almost every module depends on these types.",
-"query/breakpointsToQueries": "Pure function that converts integer px threshold maps into non-overlapping, mobile-first media-query maps. Rejects empty objects, negatives, and non-integers at runtime, and sorts ascending so the floor key (lowest threshold) comes first. Structurally prevents typos and overlapping ranges in hand-written queries. Shared by createResponsive and the low-level hooks (via normalizeQueries).",
-"media/createMediaQueryStore": "React-agnostic store factory. Creates a useSyncExternalStore-compatible store (subscribe\u00b7getSnapshot\u00b7getServerSnapshot) from a query map. First matching query in object order wins; falls back to fallback. Always returns fallback on the server. Separating matchMedia logic from React makes it independently unit-testable.",
-"policies/useSettledValue": "General-purpose anti-thrash hook. When settleMs \u003e 0, commits a value change only after it has been stable for that duration; rapid back-and-forth resets the timer, preventing transient values from surfacing. A generic primitive \u2014 independent of media/container concerns \u2014 reused by multiple hooks.",
-"policies/useHeldWhileComposing": "Generic hook that holds an upstream value change during an active IME composition (Hangul/CJK), detected document-wide via compositionstart/compositionend, and applies the latest value on compositionend. When enabled=false, it is a complete no-op with no listeners attached.",
-"responsive/renderVariant": "Pure function that normalises a variant value \u2014 whether a node (\u003cLayout /\u003e) or a function (() =\u003e \u003cLayout /\u003e) \u2014 into a node at render time. The function form defers node creation until mount, which is beneficial for heavy trees.",
-"responsive/resolveMountedKeys": "Pure function that decides which variant keys to mount. Returns all keys for eager, or only those that have been activated at least once (in original order) for lazy. Separates the \u2018which keys to mount\u2019 decision from KeepAliveVariants, keeping it testable.",
-"container/resolveContainerVariant": "Pure function that picks a variant from a measured width and a variant\u2192min-width map, choosing the largest threshold not exceeded by the width. The floor always wins when the width is below all thresholds, guaranteeing a result. Throws on an empty map.",
-"container/useElementWidth": "Hook that tracks a ref element\u2019s content-box width via ResizeObserver. Returns null before the first measurement, on the server, and when ResizeObserver is unavailable; disconnects the observer on unmount.",
-"shared/createSharedStore": "React-agnostic store with per-key values and per-key subscriptions. Notifies only the subscribers of the changed key on set, and cleans up a key\u2019s entry when the last subscriber unsubscribes. SharedStateScope instantiates this store.",
-"platform/activity": "DIP (dependency-inversion) boundary for React.Activity. All other code imports from this module rather than directly from react, centralising the platform-specific detail and making it easy to mock in tests. Uses namespace access so it falls to undefined without throwing on React \u003c 19.2; exposes isActivitySupported for callers to check availability.",
-"internal/warnOnce": "Dedup utility that calls console.warn at most once per message (resetWarnings is for tests). Prevents the Activity fallback warning from flooding the console on every render.",
-"query/normalizeQueries": "Normalises low-level hook input into a query map. All numbers \u2192 breakpointsToQueries; all strings \u2192 pass through (same reference); mix \u2192 throw. Branches the integer convenience and string escape hatch in one function.",
-"media/useMatchedVariant": "Observation primitive that wraps createMediaQueryStore in useSyncExternalStore. Returns raw matching only \u2014 no policies. Caches the store by a JSON.stringify(queries)+fallback key so that passing a new query object on every render does not break subscribe stability.",
-"shared/SharedStateScope": "Component that creates one store and provides it via context to the subtree. Creates the store once in a ref to be SSR-safe (no re-creation on each render, no cross-request leaks). \u003cResponsive\u003e and the factory Provider auto-mount this.",
-"responsive/SwapVariant": "Component that renders only the active variant. Uses \u003cFragment key={variant}\u003e to change the key on switch \u2192 clean unmount/mount (state not preserved \u2014 a true swap). The code path when Activity is not needed or not supported.",
-"responsive/KeepAliveVariants": "Component that wraps mounted variants in \u003cActivity\u003e to keep inactive ones alive (state preserved). Manages the lazy mount ledger (a Set of activated keys) directly; delegates the \u2018which keys\u2019 decision to the pure resolveMountedKeys. Rendered only when Activity is available.",
-"media/useMediaVariant": "The public viewport\u2192variant hook. A thin composition of normalizeQueries \u2192 useMatchedVariant (raw) \u2192 useSettledValue (anti-thrash) \u2192 useHeldWhileComposing (IME). Outermost policy wins. Accepts both integer breakpoints and raw query strings.",
-"media/useResponsiveValue": "The public viewport\u2192value hook. Uses the same matching and settle pipeline as useMediaVariant, but returns values[variant] at the end. Use this when you need scalars (column count, gap, label) rather than a full component tree.",
-"container/useContainerVariant": "The public container-width\u2192variant hook. Composition of useElementWidth (measurement) + resolveContainerVariant (pure matching) + useSettledValue (anti-thrash). Returns ssr or the floor variant before measurement.",
-"shared/useSharedState": "useState-shaped hook that reads shared state keyed by a string within a scope store. Throws if no scope is present. Multiple call sites with the same key and initial value synchronise; the store lives in a stable ancestor so values survive swap and remount.",
-"responsive/Responsive": "The public dispatcher. Selects KeepAliveVariants or SwapVariant based on strategy and Activity support; wraps children in SharedStateScope to auto-provide shared state. If keepAlive is requested but Activity is unavailable, warns once and falls back to swap.",
-"config/createResponsive": "Factory that generates a bound Responsive, Provider, Match, useVariant, and useResponsiveValue from a single config. Checks for reserved-prop key collisions, converts breakpoints to queries once (bound to all output), and provides per-subtree SSR overrides via SsrContext. All generated primitives delegate to the low-level APIs \u2014 no new mechanism, just composition.",
-"index": "Public barrel. Re-exports only the 7 public value APIs and the public types. Internal modules (policies, platform, internal, query\u2026) are not exposed, keeping the API surface small."
-}
+      const FILE_ROLES = {"types": "공개 타입의 단일 출처. Strategy·Mount 리터럴 유니온, VariantMap, 각 옵션 인터페이스(MediaVariantOptions 등), 정수 입력 타입 BreakpointConfig·MediaInput, 팩토리 반환 타입 ConfiguredResponsive를 정의합니다. 런타임 코드 없이 거의 모든 모듈이 의존하는 타입 기반.", "query/breakpointsToQueries": "정수 px 임계값 맵 → 비겹침·모바일퍼스트 미디어쿼리 맵으로 변환하는 순수 함수. 빈 객체·음수·비정수를 런타임에서 거부하고 오름차순 정렬해 floor(가장 낮은 임계값)가 첫 키가 되게 합니다. 손으로 쓴 쿼리의 오타·범위 겹침을 구조적으로 차단. createResponsive와 저수준 훅(normalizeQueries 경유)이 공유합니다.", "media/createMediaQueryStore": "React에 의존하지 않는 store 팩토리. 쿼리맵 → useSyncExternalStore 호환 store(subscribe·getSnapshot·getServerSnapshot)를 만듭니다. 객체 순서상 첫 매칭 쿼리가 이기고, 없으면 fallback. 서버에선 항상 fallback. matchMedia 로직을 React와 분리해 단독으로 테스트할 수 있게 합니다.", "policies/useSettledValue": "범용 anti-thrash 훅. settleMs&gt;0이면 값이 그 시간만큼 안정된 뒤에만 변경을 커밋하고, 빠른 왕복은 타이머를 리셋해 과도기 값이 노출되지 않게 합니다. 미디어·컨테이너와 무관한 일반 프리미티브라 여러 훅이 재사용합니다.", "policies/useHeldWhileComposing": "IME 조합(한글·CJK) 중 상위 값 변화를 보류하고 compositionend에 적용하는 범용 훅. document 레벨 compositionstart·end로 감지합니다. enabled=false면 리스너도 달지 않는 완전한 no-op.", "responsive/renderVariant": "variant 값이 노드(&lt;Layout /&gt;)든 함수(() =&gt; &lt;Layout /&gt;)든 렌더 시점에 노드로 정규화하는 순수 함수. 함수형은 마운트 전까지 노드 생성을 지연시켜 무거운 트리에 유리합니다.", "responsive/resolveMountedKeys": "어떤 variant 키를 마운트할지 결정하는 순수 함수. eager면 전부, lazy면 한 번이라도 활성됐던 키만(원래 순서 유지) 반환합니다. KeepAliveVariants의 \"무엇을 마운트할지\" 판단을 분리해 테스트 가능하게 합니다.", "container/resolveContainerVariant": "측정된 폭과 variant→최소폭 맵에서, 폭을 넘지 않는 최대 임계값의 variant를 고르는 순수 함수. 모든 임계값 미만이면 floor가 이겨 항상 하나를 선택합니다. 빈 맵은 throw.", "container/useElementWidth": "ResizeObserver로 ref 요소의 content-box 폭을 추적하는 훅. 첫 측정 전·서버·ResizeObserver 미지원 시 null을 반환하고, 언마운트 시 observer를 disconnect합니다.", "shared/createSharedStore": "키별 값 + 키별 구독을 가진 React 무관 store. set 시 해당 키 구독자에게만 통지하고, 마지막 구독 해제 시 키를 정리합니다. SharedStateScope가 이 store를 인스턴스화합니다.", "platform/activity": "React.Activity에 대한 DIP(의존성 역전) 경계. 나머지 코드는 react 대신 이 모듈에 의존해 플랫폼 구체물을 한곳에 모으고 테스트에서 쉽게 모킹합니다. 네임스페이스 접근이라 React&lt;19.2에서도 throw 없이 undefined로 떨어지며, isActivitySupported로 지원 여부를 노출합니다.", "internal/warnOnce": "같은 메시지는 한 번만 console.warn 하는 중복 제거 유틸(resetWarnings는 테스트용). Activity 폴백 경고가 매 렌더 쏟아지지 않게 합니다.", "query/normalizeQueries": "저수준 훅의 입력을 쿼리맵으로 정규화. 전부 숫자면 breakpointsToQueries로 변환, 전부 문자열이면 그대로(동일 참조) 반환, 섞이면 throw 합니다. 정수 편의와 문자열 탈출구를 한 함수에서 분기합니다.", "media/useMatchedVariant": "createMediaQueryStore를 useSyncExternalStore로 감싼 관찰 프리미티브. 정책 없는 raw 매칭만 반환합니다. store를 JSON.stringify(queries)+fallback 키로 캐시해, 호출자가 매 렌더 새 쿼리 객체를 넘겨도 subscribe가 안정적입니다.", "shared/SharedStateScope": "하위 트리에 store 하나를 context로 제공하는 컴포넌트. ref로 store를 한 번만 생성해 SSR-safe(렌더마다 새로 만들지 않음, 요청 간 누수 없음)합니다. &lt;Responsive&gt;와 팩토리 Provider가 이걸 자동으로 mount합니다.", "responsive/SwapVariant": "활성 variant만 렌더하는 컴포넌트. &lt;Fragment key={variant}&gt;로 키를 바꿔 전환 시 clean 언마운트/마운트 → 진짜 swap(상태 미보존)을 만듭니다. Activity가 불필요하거나 미지원일 때의 경로입니다.", "responsive/KeepAliveVariants": "마운트된 variant들을 &lt;Activity&gt;로 감싸 비활성도 살려두는(상태 보존) 컴포넌트. lazy 마운트 장부(활성된 키 Set)는 직접 관리하고, \"어떤 키인지\"는 순수 resolveMountedKeys에 위임합니다. Activity 가용 시에만 렌더됩니다.", "media/useMediaVariant": "viewport→variant 공개 훅. normalizeQueries → useMatchedVariant(raw) → useSettledValue(anti-thrash) → useHeldWhileComposing(IME)의 얇은 합성이며, 정책은 바깥쪽 우선입니다. 정수 breakpoint와 원시 쿼리 문자열을 모두 받습니다.", "media/useResponsiveValue": "viewport→값 공개 훅. useMediaVariant와 같은 매칭·settle 경로를 쓰되 마지막에 values[variant]를 반환합니다. 트리 대신 스칼라(열 수·gap·라벨)가 필요할 때 사용합니다.", "container/useContainerVariant": "viewport 대신 컨테이너 폭으로 variant를 고르는 공개 훅. useElementWidth(측정) + resolveContainerVariant(순수 매칭) + useSettledValue(anti-thrash)의 합성입니다. 측정 전에는 ssr 또는 floor를 반환합니다.", "shared/useSharedState": "스코프 store에서 key로 공유되는 useState형 훅. 스코프가 없으면 throw. 같은 key·초깃값을 여러 호출처에서 쓰면 동기화되고, store가 안정적 조상에 살아 있어 swap·remount에도 값이 보존됩니다.", "responsive/Responsive": "공개 디스패처. strategy와 Activity 지원 여부로 KeepAliveVariants/SwapVariant를 선택하고, children을 SharedStateScope로 감싸 공유 상태를 자동 제공합니다. keepAlive를 요청했지만 Activity가 없으면 1회 경고 후 swap으로 폴백합니다.", "config/createResponsive": "설정 1곳에 묶인 Responsive·Provider·Match·useVariant·useResponsiveValue를 생성하는 팩토리. 예약 prop 충돌을 검사하고, breakpointsToQueries로 쿼리를 1회 바인딩하며, SsrContext로 서브트리별 SSR override를 제공합니다. 모든 산출물은 저수준 API로 위임 — 새 메커니즘이 아닌 조립입니다.", "index": "공개 배럴. 7개 값 API와 공개 타입만 재내보냅니다. 내부 모듈(policies·platform·internal·query 등)은 노출하지 않아 API 표면을 좁게 유지합니다."}
       const GROUP_ORDER = ['types', 'platform/', 'internal/', 'query/', 'policies/', 'media/', 'container/', 'shared/', 'responsive/', 'config/', 'index'];
       const GROUP_LABEL = { types: 'types.ts', index: 'index.ts' };
       function groupKey(m) { return m.id === 'types' ? 'types' : m.id === 'index' ? 'index' : m.dir; }
